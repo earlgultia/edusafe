@@ -3,7 +3,7 @@ import { Bell, Home, Menu, Megaphone, FileText, ShieldCheck, Users } from 'lucid
 import { today } from '../appContent.js';
 import { NavButton } from '../components/SharedUI.jsx';
 
-function AppChrome({ role, roleNames, tab, onSignIn, onSignOut, onTabChange, isTabAllowed }) {
+function AppChrome({ role, userName, roleNames, tab, onSignIn, onSignOut, onTabChange, isTabAllowed }) {
   return (
     <>
       <header className="topbar">
@@ -12,6 +12,7 @@ function AppChrome({ role, roleNames, tab, onSignIn, onSignOut, onTabChange, isT
           <p>{today}</p>
           <h1>EduSafe PH</h1>
           <small className="sessionRole">{role}</small>
+          <small className="sessionUser">{userName}</small>
         </div>
         <button className="iconButton alertDot" aria-label="Notifications"><Bell size={20} /></button>
       </header>

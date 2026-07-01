@@ -1,19 +1,8 @@
 import React, { useState } from 'react';
 import { ArrowRight, Lock, Mail, ShieldCheck, UserPlus } from 'lucide-react';
 import { landingFeatures, landingProof, landingStats, mvpScreens, roleProfiles } from '../appContent.js';
-
-function inferRoleFromAccount(email) {
-  const value = String(email || '').toLowerCase();
-
-  if (/(^|[._-])(admin|principal|headmaster|head)([._-]|$)/.test(value)) return 'Admin';
-  if (/(^|[._-])(teacher|adviser|adviser2|faculty|staff)([._-]|$)/.test(value)) return 'Teacher';
-  if (/(^|[._-])(parent|guardian|mother|father|mom|dad)([._-]|$)/.test(value)) return 'Parent';
-  if (/(^|[._-])(guard|security|watchman|bantay)([._-]|$)/.test(value)) return 'Guard';
-  if (/(^|[._-])(nurse|clinic|medical|health)([._-]|$)/.test(value)) return 'Nurse';
-
-  return 'Parent';
-}
-
+import { authenticateAccount, registerAccount } from './authAccounts.js';
+import { inferRoleFromAccount, validateLoginForm, validateRegisterForm } from './authLogic.js';
 function EntryScreen({ view, role, setRole, setView, signIn }) {
   if (view === 'login') {
     return <LoginScreen role={role} setRole={setRole} onBack={() => setView('landing')} onRegister={() => setView('register')} onSubmit={(nextRole) => signIn(nextRole)} />;
@@ -122,7 +111,7 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
             </button>
           ))}
         </div>
-        <button className="submitBtn" onClick={() => signIn(role)}>
+        <button className="submitBtn" onClick={() => signIn({ role, fullName: `${role} demo` })}>
           <span>Open demo</span>
           <ArrowRight size={16} />
         </button>
@@ -133,7 +122,32 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
 
 function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
   const [form, setForm] = useState({ email: '', password: '', schoolId: '' });
-  const inferredRole = inferRoleFromAccount(form.email);
+  const [feedback, setFeedback] = useState('');
+  const inferredRole = inferRoleFromAccount(form.email, role);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const result = validateLoginForm({ ...form, fallbackRole: role });
+
+    if (!result.ok) {
+      setFeedback(result.message);
+      return;
+    }
+
+    const authResult = authenticateAccount({
+      schoolId: form.schoolId,
+      email: form.email,
+      password: form.password
+    });
+
+    if (!authResult.ok) {
+      setFeedback(authResult.message);
+      return;
+    }
+
+    setFeedback('');
+    onSubmit({ role: authResult.role, fullName: authResult.account?.fullName || form.email, email: form.email });
+  };
 
   return (
     <div className="authScreen formMode">
@@ -146,7 +160,7 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
         </div>
       </section>
 
-      <form className="authFormCard" onSubmit={(event) => { event.preventDefault(); onSubmit(inferredRole); }}>
+      <form className="authFormCard" onSubmit={handleSubmit}>
         <label className="authField">
           <span>School ID</span>
           <div className="authInputWrap"><ShieldCheck size={16} /><input value={form.schoolId} onChange={(event) => setForm({ ...form, schoolId: event.target.value })} placeholder="ESP-2026-001" required /></div>
@@ -162,8 +176,10 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
 
         <div className="loginRoleHint">
           <ShieldCheck size={16} />
-          <span>Role detected automatically: <strong>{inferredRole}</strong></span>
+          <span>Role detected from your email: <strong>{inferredRole}</strong></span>
         </div>
+
+        {feedback ? <p className="authFeedback">{feedback}</p> : null}
 
         <button className="submitBtn" type="submit">Sign in</button>
         <button className="textLink" type="button" onClick={onRegister}>Need an account? Register</button>
@@ -174,7 +190,35 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
 
 function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
   const [form, setForm] = useState({ fullName: '', email: '', mobile: '', password: '', confirmPassword: '' });
-  const inferredRole = inferRoleFromAccount(form.email);
+  const [feedback, setFeedback] = useState('');
+  const inferredRole = inferRoleFromAccount(form.email, role);
+
+  const handleSubmit = (event) => {
+    event.preventDefault();
+    const result = validateRegisterForm({ ...form, fallbackRole: role });
+
+    if (!result.ok) {
+      setFeedback(result.message);
+      return;
+    }
+
+    const registerResult = registerAccount({
+      fullName: form.fullName,
+      email: form.email,
+      schoolId: form.mobile,
+      password: form.password,
+      role: result.role,
+      phone: form.mobile
+    });
+
+    if (!registerResult.ok) {
+      setFeedback(registerResult.message);
+      return;
+    }
+
+    setFeedback('');
+    onSubmit({ role: result.role, fullName: form.fullName, email: form.email });
+  };
 
   return (
     <div className="authScreen formMode">
@@ -187,7 +231,7 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
         </div>
       </section>
 
-      <form className="authFormCard" onSubmit={(event) => { event.preventDefault(); onSubmit(inferredRole); }}>
+      <form className="authFormCard" onSubmit={handleSubmit}>
         <label className="authField">
           <span>Full name</span>
           <div className="authInputWrap"><UserPlus size={16} /><input value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="Juan Dela Cruz" required /></div>
@@ -211,8 +255,10 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
 
         <div className="loginRoleHint registerRoleHint">
           <ShieldCheck size={16} />
-          <span>Role detected automatically: <strong>{inferredRole}</strong></span>
+          <span>Role detected from your email: <strong>{inferredRole}</strong></span>
         </div>
+
+        {feedback ? <p className="authFeedback">{feedback}</p> : null}
 
         <button className="submitBtn" type="submit">Create account</button>
         <button className="textLink" type="button" onClick={onLogin}>Already have an account? Sign in</button>
