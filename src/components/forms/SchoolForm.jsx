@@ -4,8 +4,8 @@ import { FormShell, Field, Select } from '../FormFields.jsx';
 function SchoolForm({ close, actions, data }) {
   const [form, setForm] = useState({
     name: data.school?.name || '',
-    type: data.school?.type || 'Integrated School',
-    year: data.school?.year || '2026-2027',
+    type: data.school?.type || '',
+    year: data.school?.year || '',
     address: data.school?.address || '',
     contact: data.school?.contact || ''
   });
@@ -16,7 +16,7 @@ function SchoolForm({ close, actions, data }) {
       <Select
         label="School type"
         value={form.type}
-        options={['Integrated School', 'Elementary School', 'High School', 'Senior High School', 'Private School', 'Public School']}
+        options={['', 'Integrated School', 'Elementary School', 'High School', 'Senior High School', 'Private School', 'Public School']}
         onChange={(type) => setForm({ ...form, type })}
       />
       <Field label="School year" value={form.year} onChange={(year) => setForm({ ...form, year })} />

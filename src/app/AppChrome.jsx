@@ -26,8 +26,8 @@ function AppChrome({ role, userName, onSignOut }) {
           <span className="sessionUser">{userName}</span>
         </div>
         {onSignOut ? (
-          <button className="iconButton" type="button" onClick={onSignOut} aria-label="Sign out">
-            <LogOut size={18} />
+          <button className="logoutButton" type="button" onClick={onSignOut} aria-label="Sign out of EduSafe">
+            <LogOut size={20} />
           </button>
         ) : null}
       </div>

@@ -119,7 +119,7 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
       <form className="authFormCard" onSubmit={handleSubmit}>
         <label className="authField">
           <span>Email</span>
-          <div className="authInputWrap"><Mail size={16} /><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="name@school.edu.ph" required /></div>
+          <div className="authInputWrap"><Mail size={16} /><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="Email address" required /></div>
         </label>
         <label className="authField">
           <span>Password</span>
@@ -184,15 +184,15 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
       <form className="authFormCard" onSubmit={handleSubmit}>
         <label className="authField">
           <span>Full name</span>
-          <div className="authInputWrap"><UserPlus size={16} /><input value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="Juan Dela Cruz" required /></div>
+          <div className="authInputWrap"><UserPlus size={16} /><input value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} placeholder="Full name" required /></div>
         </label>
         <label className="authField">
           <span>Email</span>
-          <div className="authInputWrap"><Mail size={16} /><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="name@school.edu.ph" required /></div>
+          <div className="authInputWrap"><Mail size={16} /><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="Email address" required /></div>
         </label>
         <label className="authField">
           <span>Mobile number</span>
-          <div className="authInputWrap"><ShieldCheck size={16} /><input value={form.mobile} onChange={(event) => setForm({ ...form, mobile: event.target.value })} placeholder="+63 9xx xxx xxxx" required /></div>
+          <div className="authInputWrap"><ShieldCheck size={16} /><input value={form.mobile} onChange={(event) => setForm({ ...form, mobile: event.target.value })} placeholder="Mobile number" required /></div>
         </label>
         <label className="authField">
           <span>Password</span>

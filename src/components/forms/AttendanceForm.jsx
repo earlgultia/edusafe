@@ -2,16 +2,23 @@ import React, { useState } from 'react';
 import { FormShell, Select } from '../FormFields.jsx';
 
 function AttendanceForm({ close, actions, data }) {
-  const [grade, setGrade] = useState('Grade 1');
-  const [section, setSection] = useState('A');
-  const filteredStudents = data.students.filter((student) => student.grade === grade && student.section === section);
+  const students = data.students || [];
+  const gradeOptions = ['All grades', ...new Set(students.map((student) => student.grade).filter(Boolean))];
+  const sectionOptions = ['All sections', ...new Set(students.map((student) => student.section).filter(Boolean))];
+  const [grade, setGrade] = useState('All grades');
+  const [section, setSection] = useState('All sections');
+  const filteredStudents = students.filter((student) => {
+    const matchesGrade = grade === 'All grades' || student.grade === grade;
+    const matchesSection = section === 'All sections' || student.section === section;
+    return matchesGrade && matchesSection;
+  });
   const statuses = ['Present', 'Absent', 'Late', 'Excused'];
 
   return (
     <div className="form attendanceForm">
       <div className="attendanceFilters">
-        <Select label="Grade" value={grade} options={['Grade 1', 'Grade 7']} onChange={setGrade} />
-        <Select label="Section" value={section} options={['A', 'B']} onChange={setSection} />
+        <Select label="Grade" value={grade} options={gradeOptions} onChange={setGrade} />
+        <Select label="Section" value={section} options={sectionOptions} onChange={setSection} />
       </div>
       <div className="attendanceList">
         {filteredStudents.map((student) => (
@@ -27,6 +34,7 @@ function AttendanceForm({ close, actions, data }) {
             </div>
           </article>
         ))}
+        {!filteredStudents.length && <p className="emptyText">No students available for attendance.</p>}
       </div>
       <button className="submitBtn" type="button" onClick={close}>Done</button>
     </div>

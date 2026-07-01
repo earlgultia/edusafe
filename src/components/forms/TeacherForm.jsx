@@ -8,7 +8,7 @@ function TeacherForm({ close, actions }) {
     birthday: '',
     contact: '',
     email: '',
-    advisory: 'Grade 1 - A',
+    advisory: '',
     position: 'Grade Adviser'
   });
 

@@ -2,8 +2,10 @@ import React from 'react';
 import { QrCode } from 'lucide-react';
 
 function ReleaseForm({ close, actions, data }) {
+  const guardians = data.guardians || [];
+
   return <div className="list verifyList">
-    {(data.guardians || []).map((g) => {
+    {guardians.map((g) => {
       const student = (data.students || []).find((s) => s.id === g.studentId);
       return (
         <article className="verifyCard" key={g.id}>
@@ -19,6 +21,7 @@ function ReleaseForm({ close, actions, data }) {
         </article>
       );
     })}
+    {!guardians.length && <p className="emptyText">No guardians available for release.</p>}
   </div>;
 }
 

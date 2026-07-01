@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { FormShell } from '../FormFields.jsx';
 
 function StudentForm({ close, actions }) {
-  const [form, setForm] = useState({ lrn: '', name: '', grade: 'Grade 1', section: 'A', gender: 'Female', blood: '', guardian: '', status: 'Present', medical: 'None' });
+  const [form, setForm] = useState({ lrn: '', name: '', grade: '', section: '', gender: '', blood: '', guardian: '', status: '', medical: '' });
   return <FormShell onSubmit={() => { actions.addStudent(form); close(); }} submit="Save student">
     <FieldRow label="LRN" value={form.lrn} onChange={(lrn) => setForm({ ...form, lrn })} />
     <FieldRow label="Full name" value={form.name} onChange={(name) => setForm({ ...form, name })} />

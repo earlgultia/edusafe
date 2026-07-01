@@ -17,6 +17,11 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
     ? `${present} present · ${absent} absent · ${late} late · ${excused} excused`
     : 'Attendance data not available yet';
   const openSheet = (sheet) => setSheet?.(sheet);
+  const dateLabel = new Date().toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
 
   const renderContent = () => {
     switch (activeTab) {
@@ -44,15 +49,11 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
       default:
         return (
           <section className="tabPage">
-            <section className="dashboardHeader">
-              <div>
-                <span>Parent workspace</span>
-                <h2>Welcome back, {userName}</h2>
-                <p className="dashboardNote">Manage attendance, notifications, and guardian passes for your child.</p>
-              </div>
-              <div className="dashboardBadge">
-                <strong>{student.name || 'No linked student'}</strong>
-                <small>{student.grade ? `Grade ${student.grade}` : 'Student profile not linked'}</small>
+            <section className="dashboardHeader cleanHeader">
+              <div className="headerTitleBlock">
+                <span className="headerDate">{dateLabel}</span>
+                <h3>Parent Overview</h3>
+                <p className="headerPersona">Parent • {userName}</p>
               </div>
             </section>
 

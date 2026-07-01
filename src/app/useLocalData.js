@@ -2,10 +2,22 @@ import { useState } from 'react';
 
 import { initialData } from '../appContent.js';
 
+function hasDemoSeed(data) {
+  return data?.school?.id === 'ESP-2026-001';
+}
+
 function useLocalData() {
   const [data, setData] = useState(() => {
     const saved = localStorage.getItem('edusafe-data');
-    return saved ? JSON.parse(saved) : initialData;
+    if (!saved) return initialData;
+
+    const parsed = JSON.parse(saved);
+    if (hasDemoSeed(parsed)) {
+      localStorage.setItem('edusafe-data', JSON.stringify(initialData));
+      return initialData;
+    }
+
+    return parsed;
   });
 
   const update = (recipe) => {

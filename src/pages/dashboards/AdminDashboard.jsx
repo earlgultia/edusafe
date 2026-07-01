@@ -4,6 +4,11 @@ import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, signOut }) {
   const [activeTab, setActiveTab] = useState('home');
   const school = data.school || {};
+  const schoolName = school.name || 'School profile not set';
+  const schoolType = school.type || 'School type not set';
+  const schoolYear = school.year || 'School year not set';
+  const schoolContact = school.contact || 'Contact not set';
+  const schoolAddress = school.address || 'Address not set';
   const totalStudents = stats.total ?? data.students?.length ?? 0;
   const present = stats.present ?? 0;
   const absent = stats.absent ?? 0;
@@ -92,11 +97,11 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
             <section className="metricGrid">
               <article className="featureCard">
                 <h3>School profile</h3>
-                <p>{school.name || 'EduSafe PH Academy'}</p>
+                <p>{schoolName}</p>
               </article>
               <article className="featureCard">
                 <h3>School year</h3>
-                <p>{school.year || '2026–2027'}</p>
+                <p>{schoolYear}</p>
               </article>
               <article className="featureCard">
                 <h3>Teacher accounts</h3>
@@ -188,26 +193,26 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
             <section className="metricGrid">
               <article className="featureCard">
                 <h3>School name</h3>
-                <p>{school.name || 'EduSafe PH Academy'}</p>
+                <p>{schoolName}</p>
               </article>
               <article className="featureCard">
                 <h3>School type</h3>
-                <p>{school.type || 'Integrated School'}</p>
+                <p>{schoolType}</p>
               </article>
               <article className="featureCard">
                 <h3>School year</h3>
-                <p>{school.year || '2026–2027'}</p>
+                <p>{schoolYear}</p>
               </article>
               <article className="featureCard">
                 <h3>Campus contact</h3>
-                <p>{school.contact || '+63 917 555 0148'}</p>
+                <p>{schoolContact}</p>
               </article>
             </section>
 
             <section className="featureList">
               <article className="featureCard">
                 <h3>Address</h3>
-                <p>{school.address || 'Mandaluyong City, Metro Manila'}</p>
+                <p>{schoolAddress}</p>
               </article>
               <article className="featureCard">
                 <h3>Teacher accounts</h3>
@@ -306,6 +311,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                   <span>{incident.status || 'Open'}</span>
                 </article>
               ))}
+              {!(data.visitors || []).length && !(data.incidents || []).length && <p className="emptyText">No safety logs yet.</p>}
             </div>
           </section>
         );
@@ -333,7 +339,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
             <div className="profileDetails">
               <div>
                 <p className="metricText">School</p>
-                <strong>{school.name || 'EduSafe PH Academy'}</strong>
+                <strong>{schoolName}</strong>
               </div>
               <div>
                 <p className="metricText">Role</p>
@@ -341,7 +347,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
               </div>
               <div>
                 <p className="metricText">School year</p>
-                <strong>{school.year || '2026–2027'}</strong>
+                <strong>{schoolYear}</strong>
               </div>
               <div>
                 <p className="metricText">Verified guardians</p>
@@ -360,8 +366,8 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
         return (
           <>
             <section className="sectionTitleBlock">
-              <span>{currentDate} • {school.type || 'Integrated School'}</span>
-              <h2>{school.name || 'EduSafe PH Academy'}</h2>
+              <span>{currentDate} • {schoolType}</span>
+              <h2>{schoolName}</h2>
             </section>
 
             <section className="metricGrid">
@@ -498,6 +504,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                   </div>
                 </article>
               ))}
+              {!activity.length && <p className="emptyText">No recent notifications yet.</p>}
             </section>
           </>
         );

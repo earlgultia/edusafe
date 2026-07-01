@@ -2,9 +2,11 @@ import React from 'react';
 import { QrCode } from 'lucide-react';
 
 function PickupForm({ close, actions, data }) {
+  const guardians = data.guardians || [];
+
   return (
     <div className="list verifyList">
-      {(data.guardians || []).map((guardian) => {
+      {guardians.map((guardian) => {
         const student = (data.students || []).find((item) => item.id === guardian.studentId);
         return (
           <article className="verifyCard" key={guardian.id}>
@@ -20,6 +22,7 @@ function PickupForm({ close, actions, data }) {
           </article>
         );
       })}
+      {!guardians.length && <p className="emptyText">No guardians available for pickup.</p>}
     </div>
   );
 }
