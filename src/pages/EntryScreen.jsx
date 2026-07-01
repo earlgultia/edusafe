@@ -34,64 +34,28 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
         </div>
       </section>
 
-      <section className="landingSection landingStats">
-        {landingStats.map((item) => (
-          <article className="statPill" key={item.label}>
-            <strong>{item.value}</strong>
-            <span>{item.label}</span>
+      <section className="landingSection landingCards">
+        {landingFeatures.map((feature) => (
+          <article key={feature.title} className="landingCard">
+            <span className="cardAccent" />
+            <h3>{feature.title}</h3>
+            <p>{feature.text}</p>
           </article>
         ))}
       </section>
 
-      <section className="landingSection">
+      <section className="landingSection landingPreview">
         <div className="sectionTitleBlock">
-          <span>Why schools use it</span>
-          <h2>Simple operational tools, designed for safety first.</h2>
+          <span>Fast workflows</span>
+          <h2>Visual role journeys for every school team.</h2>
         </div>
-        <div className="featureList">
-          {landingFeatures.map((feature) => (
-            <article key={feature.title} className="featureCard">
-              <h3>{feature.title}</h3>
-              <p>{feature.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="landingSection showcasePanel">
-        <div className="sectionTitleBlock">
-          <span>Workflow preview</span>
-          <h2>One mobile flow for every role.</h2>
-        </div>
-        <div className="workflowList">
-          {mvpScreens.map((screen) => (
-            <article key={screen.title} className="workflowCard">
-              <div>
-                <h3>{screen.title}</h3>
-                <p>{screen.description}</p>
-              </div>
+        <div className="workflowList compact">
+          {mvpScreens.slice(0, 4).map((screen) => (
+            <article key={screen.title} className="workflowCard smallCard">
+              <h3>{screen.title}</h3>
               <small>{screen.role}</small>
             </article>
           ))}
-        </div>
-      </section>
-
-      <section className="landingSection trustPanel">
-        <div className="sectionTitleBlock">
-          <span>Trusted by design</span>
-          <h2>Professional access with clear roles and secure handling.</h2>
-        </div>
-        <div className="trustGrid">
-          <article>
-            <ShieldCheck size={20} />
-            <h3>Role-based access</h3>
-            <p>Each screen is shaped for how admins, teachers, parents, guards, and nurses actually work.</p>
-          </article>
-          <article>
-            <ShieldCheck size={20} />
-            <h3>Verified workflows</h3>
-            <p>Attendance, pickup, and visitor steps stay readable and auditable on a phone.</p>
-          </article>
         </div>
       </section>
 
@@ -99,31 +63,23 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
         <div className="authCardHead">
           <div>
             <h2>Quick access</h2>
-            <p>Select your role and continue into the system.</p>
+            <p>Use your existing EduSafe account to sign in, or create a new one with your selected role.</p>
           </div>
           <ShieldCheck size={18} />
         </div>
-        <div className="authRoleList">
-          {Object.entries(roleProfiles).map(([name, info]) => (
-            <button key={name} className={role === name ? 'active' : ''} onClick={() => setRole(name)}>
-              <strong>{name}</strong>
-              <span>{info.subtitle}</span>
-            </button>
-          ))}
-        </div>
-        <button className="submitBtn" onClick={() => signIn({ role, fullName: `${role} User` })}>
-          <span>Continue</span>
+        <button className="submitBtn" onClick={() => setView('login')}>
+          <span>Continue to sign in</span>
           <ArrowRight size={16} />
         </button>
+        <p className="miniNote">Register first to select your role, then sign in with that account.</p>
       </section>
     </div>
   );
 }
 
-function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
+function LoginScreen({ role, onBack, onRegister, onSubmit }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [feedback, setFeedback] = useState('');
-  const inferredRole = inferRoleFromAccount(form.email, role);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -170,11 +126,6 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
           <div className="authInputWrap"><Lock size={16} /><input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Enter password" required /></div>
         </label>
 
-        <div className="loginRoleHint">
-          <ShieldCheck size={16} />
-          <span>Role detected from your email: <strong>{inferredRole}</strong></span>
-        </div>
-
         {feedback ? <p className="authFeedback">{feedback}</p> : null}
 
         <button className="submitBtn" type="submit">Sign in</button>
@@ -187,7 +138,9 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
 function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
   const [form, setForm] = useState({ fullName: '', email: '', mobile: '', password: '', confirmPassword: '' });
   const [feedback, setFeedback] = useState('');
+  const [showRoleModal, setShowRoleModal] = useState(false);
   const inferredRole = inferRoleFromAccount(form.email, role);
+  const availableRoles = Object.keys(roleProfiles);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -198,12 +151,13 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
       return;
     }
 
+    const registerRole = role || result.role;
     const registerResult = await registerAccount({
       fullName: form.fullName,
       email: form.email,
-      schoolId: form.mobile,
+      schoolId: '',
       password: form.password,
-      role: result.role,
+      role: registerRole,
       phone: form.mobile
     });
 
@@ -213,7 +167,7 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
     }
 
     setFeedback('');
-    onSubmit({ role: result.role, fullName: form.fullName, email: form.email });
+    onSubmit({ role: registerRole, fullName: form.fullName, email: form.email });
   };
 
   return (
@@ -249,10 +203,45 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
           <div className="authInputWrap"><Lock size={16} /><input type="password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} placeholder="Repeat password" required /></div>
         </label>
 
+        <button type="button" className="roleSelectBtn" onClick={() => setShowRoleModal(true)}>
+          <span className="roleSelectLabel">Role</span>
+          <strong>{role || 'Choose role'}</strong>
+        </button>
+
         <div className="loginRoleHint registerRoleHint">
           <ShieldCheck size={16} />
           <span>Role detected from your email: <strong>{inferredRole}</strong></span>
         </div>
+
+        {showRoleModal ? (
+          <div className="overlay" onClick={() => setShowRoleModal(false)}>
+            <div className="sheet" onClick={(event) => event.stopPropagation()}>
+              <div className="sheetHead">
+                <div>
+                  <h2>Select your role</h2>
+                  <p className="sheetSubtitle">Choose the profile that matches how you’ll use EduSafe PH.</p>
+                </div>
+                <button type="button" className="textButton" onClick={() => setShowRoleModal(false)}>Cancel</button>
+              </div>
+              <div className="roleModalGrid">
+                {availableRoles.map((option) => (
+                  <button
+                    key={option}
+                    type="button"
+                    className={role === option ? 'roleOption active' : 'roleOption'}
+                    onClick={() => {
+                      setRole(option);
+                      setShowRoleModal(false);
+                    }}
+                  >
+                    <div className="roleOptionTitle">{option}</div>
+                    <div className="roleOptionSubtitle">{roleProfiles[option]?.subtitle}</div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : null}
 
         {feedback ? <p className="authFeedback">{feedback}</p> : null}
 

@@ -143,7 +143,12 @@ async function authenticateAccount({ schoolId, email, password }) {
   }
 
   const accounts = readAccounts();
-  const account = accounts.find((item) => String(item.schoolId || '').trim() === normalizedSchoolId && String(item.email || '').toLowerCase() === normalizedEmail);
+  const account = accounts.find((item) => {
+    const matchesEmail = String(item.email || '').toLowerCase() === normalizedEmail;
+    if (!matchesEmail) return false;
+    if (!normalizedSchoolId) return true;
+    return String(item.schoolId || '').trim() === normalizedSchoolId;
+  });
 
   if (!account) {
     return { ok: false, message: 'We could not find an account with those details.' };

@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 
-function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet }) {
+function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, signOut }) {
   const [activeTab, setActiveTab] = useState('home');
   const school = data.school || {};
   const totalStudents = stats.total ?? data.students?.length ?? 0;
@@ -51,13 +51,42 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
       case 'register':
         return (
           <section className="tabPage">
-            <div className="sectionHeader">
-              <h2>Registration Center</h2>
-              <div className="actionRow">
-                <button className="smallBtn" type="button" onClick={() => openSheet('student')}>Add Student</button>
-                <button className="smallBtn" type="button" onClick={() => openSheet('teacher')}>Add Teacher</button>
-                <button className="smallBtn" type="button" onClick={() => openSheet('guardian')}>Add Guardian</button>
+            <div className="sectionHeader registerHeader">
+              <div>
+                <p className="sectionLabel">Registration Center</p>
+                <h2>Quick onboarding actions for your school community</h2>
               </div>
+            </div>
+
+            <div className="registerActionGrid">
+              <button className="registerActionButton" type="button" onClick={() => openSheet('student')}>
+                <span className="material-symbols-outlined actionIcon">school</span>
+                <div>
+                  <strong>Add Student</strong>
+                  <small>Register a learner profile</small>
+                </div>
+              </button>
+              <button className="registerActionButton" type="button" onClick={() => openSheet('teacher')}>
+                <span className="material-symbols-outlined actionIcon">person_add</span>
+                <div>
+                  <strong>Add Teacher</strong>
+                  <small>Create a faculty account</small>
+                </div>
+              </button>
+              <button className="registerActionButton" type="button" onClick={() => openSheet('guardian')}>
+                <span className="material-symbols-outlined actionIcon">family_restroom</span>
+                <div>
+                  <strong>Add Guardian</strong>
+                  <small>Link trusted contacts</small>
+                </div>
+              </button>
+              <button className="registerActionButton" type="button" onClick={() => openSheet('school')}>
+                <span className="material-symbols-outlined actionIcon">edit_location</span>
+                <div>
+                  <strong>Edit School</strong>
+                  <small>Update campus details</small>
+                </div>
+              </button>
             </div>
 
             <section className="metricGrid">
@@ -146,6 +175,53 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
                 </article>
               ))}
             </div>
+          </section>
+        );
+      case 'school':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <h2>School Setup</h2>
+              <button className="smallBtn" type="button" onClick={() => openSheet('school')}>Edit School Profile</button>
+            </div>
+
+            <section className="metricGrid">
+              <article className="featureCard">
+                <h3>School name</h3>
+                <p>{school.name || 'EduSafe PH Academy'}</p>
+              </article>
+              <article className="featureCard">
+                <h3>School type</h3>
+                <p>{school.type || 'Integrated School'}</p>
+              </article>
+              <article className="featureCard">
+                <h3>School year</h3>
+                <p>{school.year || '2026–2027'}</p>
+              </article>
+              <article className="featureCard">
+                <h3>Campus contact</h3>
+                <p>{school.contact || '+63 917 555 0148'}</p>
+              </article>
+            </section>
+
+            <section className="featureList">
+              <article className="featureCard">
+                <h3>Address</h3>
+                <p>{school.address || 'Mandaluyong City, Metro Manila'}</p>
+              </article>
+              <article className="featureCard">
+                <h3>Teacher accounts</h3>
+                <p>{teachers} active teachers</p>
+              </article>
+              <article className="featureCard">
+                <h3>Guardians</h3>
+                <p>{guardians} trusted contacts</p>
+              </article>
+              <article className="featureCard">
+                <h3>Enrolled students</h3>
+                <p>{totalStudents}</p>
+              </article>
+            </section>
           </section>
         );
       case 'reports':
@@ -271,6 +347,12 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
                 <p className="metricText">Verified guardians</p>
                 <strong>{verifiedGuardians}</strong>
               </div>
+            </div>
+            <div className="profileActionRow">
+              <button className="logoutPill" type="button" onClick={signOut}>
+                <span className="material-symbols-outlined">logout</span>
+                <span>Sign out of EduSafe</span>
+              </button>
             </div>
           </section>
         );
@@ -436,6 +518,10 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
         <button className={`navButton ${activeTab === 'register' ? 'active' : ''}`} onClick={() => setActiveTab('register')}>
           <span className="material-symbols-outlined">groups</span>
           <span>Register</span>
+        </button>
+        <button className={`navButton ${activeTab === 'school' ? 'active' : ''}`} onClick={() => setActiveTab('school')}>
+          <span className="material-symbols-outlined">school</span>
+          <span>School</span>
         </button>
         <button className={`navButton ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
           <span className="material-symbols-outlined">shield</span>
