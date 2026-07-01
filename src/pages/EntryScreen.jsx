@@ -20,8 +20,14 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
         <p>Simple mobile workflows for parents, teachers, guards, and school staff.</p>
 
         <div className="heroActions">
-          <button className="submitBtn" onClick={() => setView('login')}>Sign in</button>
-          <button className="ghostBtn" onClick={() => setView('register')}>Create account</button>
+          <button className="submitBtn" onClick={() => setView('login')}>
+            <span>Sign in</span>
+            <ArrowRight size={16} />
+          </button>
+          <button className="ghostBtn" onClick={() => setView('register')}>
+            <UserPlus size={16} />
+            <span>Create account</span>
+          </button>
         </div>
 
         <div className="proofStrip">

@@ -3,7 +3,7 @@ import { AdminDashboard } from './AdminDashboard.jsx';
 import { ParentDashboard } from './ParentDashboard.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 
-function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setSheet, actions }) {
+function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setSheet, actions, signOut }) {
   const [activeTab, setActiveTab] = useState('home');
   const students = data.students || [];
   const announcements = data.announcements || [];
@@ -105,9 +105,14 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
       default:
         return (
           <section className="tabPage">
-            <section className="sectionTitleBlock">
-              <span>Teacher workspace</span>
-              <h2>Welcome, {userName}</h2>
+            <section className="sectionTitleBlock sectionTitleRow">
+              <div>
+                <span>Teacher workspace</span>
+                <h2>Welcome, {userName}</h2>
+              </div>
+              <button className="logoutButton" type="button" onClick={signOut} aria-label="Sign out">
+                <span className="material-symbols-outlined">logout</span>
+              </button>
             </section>
             <section className="metricGrid">
               <article className="heroCard">

@@ -822,256 +822,269 @@ progress::-webkit-progress-value {
 }
 
 .landingMode {
-  padding-bottom: 28px;
-  background: #f8f9ff;
+  padding-bottom: 32px;
+  background: linear-gradient(180deg, #edf6fb 0%, #f7fbff 100%);
 }
 
 .authScreen {
   display: grid;
   grid-auto-rows: minmax(min-content, auto);
+  gap: 16px;
+  padding: 12px 0 28px;
 }
 
 .landingHero {
   position: relative;
   display: grid;
-  gap: 1.1rem;
-  padding: 22px 18px;
-  border-radius: 22px;
+  gap: 1rem;
+  padding: 24px;
+  border-radius: 28px;
   color: #fff;
-  background: linear-gradient(140deg, #2563eb 0%, #0f766e 100%);
-  box-shadow: 0 20px 40px rgba(15, 31, 30, 0.12);
+  background: linear-gradient(140deg, #1d4ed8 0%, #0f766e 100%);
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.16);
   overflow: hidden;
 }
 
-.heroActions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+.landingHero::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  right: -15%;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  filter: blur(16px);
 }
 
-.proofStrip {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
-  gap: 10px;
-  margin-top: 0;
-}
-
-.proofCard {
-  min-height: 110px;
-}
-
-.landingSection {
-  display: grid;
-  gap: 14px;
-  padding: 0 12px;
-  min-width: 0;
-  width: 100%;
-}
-
-.landingCards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  min-width: 0;
-}
-
-.landingPreview {
-  padding: 16px 0 0;
-}
-
-.workflowList.compact {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 10px;
-}
-
-.authCard {
-  margin-top: 4px;
-  z-index: 1;
-}
-
-@media (max-width: 700px) {
-  .proofStrip,
-  .landingCards,
-  .workflowList.compact {
-    grid-template-columns: 1fr;
-  }
+.landingHero::after {
+  content: '';
+  position: absolute;
+  bottom: -20px;
+  left: 10%;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .heroBadge {
   display: inline-flex;
-  margin-bottom: 12px;
-  padding: 6px 10px;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
   border-radius: 999px;
-  background: #eef4ff;
-  color: #1d4ed8;
-  font-size: 0.74rem;
-  font-weight: 900;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 800;
   letter-spacing: 0.02em;
 }
 
 .landingHero h1 {
   margin: 0;
-  font-size: 1.6rem;
-  line-height: 1.15;
+  font-size: 2.1rem;
+  line-height: 1.05;
   letter-spacing: -0.03em;
+  max-width: 16ch;
 }
 
 .landingHero p {
   margin: 0;
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 0.96rem;
-  line-height: 1.55;
-  max-width: 90%;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 1rem;
+  line-height: 1.7;
+  max-width: 36rem;
 }
 
 .heroActions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 14px;
 }
 
 .heroActions button {
-  min-height: 46px;
-  border-radius: 16px;
+  min-height: 52px;
+  border-radius: 18px;
+  padding: 0 18px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 
 .ghostBtn {
-  color: #1d4ed8;
-  background: rgba(255, 255, 255, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  font-weight: 700;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.16);
+  border: 1px solid rgba(255, 255, 255, 0.28);
 }
 
 .submitBtn {
-  min-height: 46px;
-  border-radius: 16px;
+  min-height: 52px;
+  border-radius: 18px;
+  background: #fff;
+  color: #0f172a;
 }
 
 .proofStrip {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 18px;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 12px;
+  margin-top: 20px;
 }
 
 .proofCard {
   display: grid;
-  gap: 4px;
-  padding: 14px 12px;
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  gap: 6px;
+  padding: 18px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   backdrop-filter: blur(10px);
 }
 
 .proofCard strong {
-  display: block;
   margin: 0;
-  font-size: 1rem;
-  color: #ffffff;
-  letter-spacing: -0.01em;
+  font-size: 1.05rem;
+  color: #fff;
 }
 
 .proofCard span {
   margin: 0;
-  color: rgba(255, 255, 255, 0.75);
-  font-size: 0.72rem;
-  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.75rem;
 }
 
 .landingSection {
   display: grid;
-  gap: 16px;
-  padding: 0 8px;
-  min-width: 0;
+  gap: 18px;
+  padding: 0 12px;
 }
 
 .landingCards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 10px;
-  min-width: 0;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
 }
 
 .landingCard {
   position: relative;
-  min-height: 130px;
-  padding: 18px 16px 16px;
-  border-radius: 24px;
-  background: #ffffff;
-  border: 1px solid rgba(15, 23, 42, 0.06);
-  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
+  min-height: 140px;
+  padding: 22px 18px;
+  border-radius: 26px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 
 .landingCard .cardAccent {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 34px;
-  height: 34px;
-  border-radius: 14px;
+  top: 18px;
+  right: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 16px;
   background: linear-gradient(135deg, #1d4ed8, #0f766e);
 }
 
 .landingCard h3 {
   margin: 0 0 10px;
-  font-size: 1rem;
-  color: #0d1c2e;
+  font-size: 1.04rem;
+  color: #0f172a;
 }
 
 .landingCard p {
   margin: 0;
   color: #475569;
-  font-size: 0.84rem;
-  line-height: 1.45;
-  max-height: 3em;
-  overflow: hidden;
+  font-size: 0.9rem;
+  line-height: 1.6;
 }
 
 .landingPreview {
-  padding: 16px 0 0;
+  padding: 0;
 }
 
 .workflowList.compact {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
 }
 
 .workflowCard.smallCard {
-  padding: 16px;
-  border-radius: 16px;
-  background: #ffffff;
-  border: 1px solid #dbe5e1;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+  padding: 18px;
+  border-radius: 20px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 30px rgba(15, 23, 42, 0.06);
 }
 
 .workflowCard.smallCard h3 {
   margin: 0 0 8px;
   font-size: 1rem;
-  color: #0d1c2e;
+  color: #0f172a;
 }
 
 .workflowCard.smallCard small {
   color: #5a6473;
-  font-size: 0.8rem;
+  font-size: 0.82rem;
 }
 
-.miniNote {
-  margin: 10px 0 0;
-  color: #5a6473;
-  font-size: 0.82rem;
-  text-align: center;
+.authCard.authPanel {
+  padding: 22px;
+  border-radius: 28px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 42px rgba(15, 23, 42, 0.08);
+}
+
+.authCardHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.authCardHead h2 {
+  margin: 0;
+  font-size: 1.08rem;
+  line-height: 1.25;
+}
+
+.authCardHead p {
+  margin: 4px 0 0;
+  color: #52645e;
+  font-size: 0.9rem;
+}
+
+.authPanel .submitBtn {
+  width: 100%;
+  min-height: 52px;
+  border-radius: 18px;
+}
+
+.authPanel .submitBtn span {
+  margin-right: 8px;
 }
 
 @media (max-width: 700px) {
-  .proofStrip,
-  .landingCards,
-  .workflowList.compact {
+  .heroActions {
     grid-template-columns: 1fr;
+  }
+
+  .landingHero {
+    padding: 20px;
+  }
+
+  .landingHero h1 {
+    font-size: 1.9rem;
+  }
+
+  .landingSection {
+    padding: 0 14px;
   }
 }
 
@@ -1822,6 +1835,24 @@ nav.fixed { height: 74px; }
   line-height: 1.3;
 }
 
+.sectionTitleBlock.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sectionTitleBlock.sectionTitleRow > div {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .sectionTitleBlock.sectionTitleRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 .featureList,
 .workflowList {
   display: grid;
@@ -2120,12 +2151,24 @@ nav.fixed { height: 74px; }
 .workflowCard {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 12px;
+  text-align: center;
+}
+
+.workflowCard > div {
+  flex: 1 1 auto;
+}
+
+.workflowCard h3,
+.workflowCard p {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .workflowCard small {
   flex: 0 0 auto;
-  align-self: start;
+  align-self: center;
   padding: 5px 8px;
   border-radius: 999px;
   background: #e2f3ef;
