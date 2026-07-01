@@ -434,6 +434,18 @@ button {
   font-size: 1rem;
 }
 
+.actionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.actionRow button {
+  flex: 1 1 auto;
+  min-width: 135px;
+}
+
 .sectionHeader button,
 .smallBtn,
 .emergencyPanel button {
@@ -1502,6 +1514,172 @@ nav.fixed { height: 74px; }
   font-size: 0.94rem;
 }
 
+.rosterGrid {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.rosterCard {
+  padding: 16px;
+}
+
+.rosterHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rosterHeader span {
+  color: #0f766e;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.rosterList {
+  display: grid;
+  gap: 10px;
+}
+
+.rosterItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  background: #f4fbf8;
+}
+
+.rosterItem strong {
+  font-size: 0.92rem;
+}
+
+.rosterItem span {
+  color: #4b746b;
+  font-size: 0.78rem;
+}
+
+.emptyText {
+  margin: 0;
+  color: #7c918c;
+  font-size: 0.8rem;
+}
+
+.peopleSheet {
+  display: grid;
+  gap: 16px;
+}
+
+.sheetIntro {
+  margin-bottom: 12px;
+}
+
+.sheetIntro h3 {
+  margin: 0 0 4px;
+  font-size: 1rem;
+}
+
+.sheetIntro p {
+  margin: 0;
+  color: #56635f;
+  font-size: 0.85rem;
+}
+
+.peopleSection {
+  background: #f8faf8;
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.peopleSectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.peopleSectionHeader h4 {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.peopleSectionHeader span {
+  color: #0f766e;
+  font-weight: 800;
+  font-size: 0.78rem;
+}
+
+.peopleControls {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.peopleTabs {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tabButton {
+  flex: 1 1 0;
+  min-width: 100px;
+  padding: 10px 12px;
+  border: 1px solid #dbe5e1;
+  border-radius: 10px;
+  background: #f8faf8;
+  color: #0f4d47;
+  font-weight: 800;
+}
+
+.tabButton.active {
+  background: #0f766e;
+  color: #fff;
+  border-color: #0f766e;
+}
+
+.searchField {
+  width: 100%;
+}
+
+.searchField input {
+  width: 100%;
+  border-color: #d8e3df;
+  background: #fff;
+}
+
+.peopleList {
+  display: grid;
+  gap: 10px;
+}
+
+.peopleItem {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.peopleItem strong {
+  font-size: 0.9rem;
+}
+
+.peopleItem p {
+  margin: 4px 0 0;
+  color: #597069;
+  font-size: 0.78rem;
+}
+
+.peopleItem span {
+  color: #0f766e;
+  font-size: 0.77rem;
+  font-weight: 800;
+}
 .featureCard p,
 .workflowCard p {
   margin: 0;
@@ -1872,6 +2050,13 @@ nav.fixed { height: 74px; }
   resize: vertical;
 }
 
+.fieldNote {
+  margin: 0;
+  color: #47554f;
+  font-size: 0.78rem;
+  padding: 0 8px 8px;
+}
+
 .submitBtn,
 .emergencyChoices button {
   min-height: 46px;
@@ -1879,6 +2064,11 @@ nav.fixed { height: 74px; }
   color: #fff;
   background: #0f766e;
   font-weight: 900;
+}
+
+.submitBtn:disabled {
+  background: #9dc6bc;
+  cursor: not-allowed;
 }
 
 .photoBtn {

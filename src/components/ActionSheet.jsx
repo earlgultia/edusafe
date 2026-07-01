@@ -1,6 +1,8 @@
 import React from 'react';
 import { X } from 'lucide-react';
 import { StudentForm } from './forms/StudentForm.jsx';
+import { TeacherForm } from './forms/TeacherForm.jsx';
+import { GuardianForm } from './forms/GuardianForm.jsx';
 import { AttendanceForm } from './forms/AttendanceForm.jsx';
 import { PickupForm } from './forms/PickupForm.jsx';
 import { VisitorForm } from './forms/VisitorForm.jsx';
@@ -15,6 +17,7 @@ function ActionSheet({ sheet, close, data, actions }) {
   const titles = {
     student: 'Add Student',
     teacher: 'Add Teacher',
+    guardian: 'Add Guardian',
     attendance: 'Attendance',
     pickup: 'Guardian Pickup',
     visitor: 'New Visitor',
@@ -43,7 +46,8 @@ function ActionSheet({ sheet, close, data, actions }) {
         {sheet === 'announcement' && <AnnouncementForm close={close} actions={actions} />}
         {sheet === 'emergency' && <EmergencyForm close={close} actions={actions} />}
         {sheet === 'release' && <ReleaseForm close={close} actions={actions} data={data} />}
-        {sheet === 'teacher' && <BasicForm close={close} message="Teacher account creation is queued for admin approval." />}
+        {sheet === 'teacher' && <TeacherForm close={close} actions={actions} />}
+        {sheet === 'guardian' && <GuardianForm close={close} actions={actions} data={data} />}
         {sheet === 'form' && <BasicForm close={close} message="Digital form published to selected audience." />}
         {sheet === 'lost' && <BasicForm close={close} message="Lost item published for parent and student review." />}
       </div>

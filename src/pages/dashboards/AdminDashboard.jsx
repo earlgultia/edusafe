@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 
 function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet }) {
   const [activeTab, setActiveTab] = useState('home');
@@ -52,7 +53,11 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
           <section className="tabPage">
             <div className="sectionHeader">
               <h2>Registration Center</h2>
-              <button className="smallBtn" type="button" onClick={() => openSheet('student')}>Add Student</button>
+              <div className="actionRow">
+                <button className="smallBtn" type="button" onClick={() => openSheet('student')}>Add Student</button>
+                <button className="smallBtn" type="button" onClick={() => openSheet('teacher')}>Add Teacher</button>
+                <button className="smallBtn" type="button" onClick={() => openSheet('guardian')}>Add Guardian</button>
+              </div>
             </div>
 
             <section className="metricGrid">
@@ -74,9 +79,42 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
               </article>
             </section>
 
+            <section className="rosterGrid">
+              <article className="featureCard rosterCard">
+                <div className="rosterHeader">
+                  <h3>Teacher roster</h3>
+                  <span>{teachers} total</span>
+                </div>
+                <div className="rosterList">
+                  {recentTeachers.map((teacher) => (
+                    <div key={teacher.id} className="rosterItem">
+                      <strong>{teacher.name}</strong>
+                      <span>{teacher.position}</span>
+                    </div>
+                  ))}
+                  {!recentTeachers.length && <p className="emptyText">No teacher accounts registered yet.</p>}
+                </div>
+              </article>
+              <article className="featureCard rosterCard">
+                <div className="rosterHeader">
+                  <h3>Guardian registry</h3>
+                  <span>{verifiedGuardians}/{guardians} verified</span>
+                </div>
+                <div className="rosterList">
+                  {recentGuardians.map((guardian) => (
+                    <div key={guardian.id} className="rosterItem">
+                      <strong>{guardian.name}</strong>
+                      <span>{guardian.relation}</span>
+                    </div>
+                  ))}
+                  {!recentGuardians.length && <p className="emptyText">No guardians registered yet.</p>}
+                </div>
+              </article>
+            </section>
+
             <section className="sectionHeader">
               <h2>Recent registrations</h2>
-              <button className="textButton" type="button">View All</button>
+              <button className="textButton" type="button" onClick={() => setActiveTab('people')}>View All</button>
             </section>
 
             <div className="featureList">
@@ -195,6 +233,16 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
             </div>
           </section>
         );
+      case 'people':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <h2>People registry</h2>
+              <button className="smallBtn" type="button" onClick={() => setActiveTab('register')}>Back</button>
+            </div>
+            <PeopleSheet data={data} />
+          </section>
+        );
       case 'profile':
         return (
           <section className="tabPage profilePage">
@@ -309,6 +357,20 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
                 </div>
                 <small>New</small>
               </button>
+              <button type="button" className="workflowCard" onClick={() => openSheet('teacher')}>
+                <div>
+                  <h3>Add Teacher</h3>
+                  <p>Create a teacher profile.</p>
+                </div>
+                <small>Staff</small>
+              </button>
+              <button type="button" className="workflowCard" onClick={() => openSheet('guardian')}>
+                <div>
+                  <h3>Add Guardian</h3>
+                  <p>Register a guardian and link to a student.</p>
+                </div>
+                <small>Guard</small>
+              </button>
               <button type="button" className="workflowCard" onClick={() => openSheet('visitor')}>
                 <div>
                   <h3>New Visitor</h3>
@@ -378,6 +440,10 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet })
         <button className={`navButton ${activeTab === 'reports' ? 'active' : ''}`} onClick={() => setActiveTab('reports')}>
           <span className="material-symbols-outlined">shield</span>
           <span>Safety</span>
+        </button>
+        <button className={`navButton ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
+          <span className="material-symbols-outlined">people</span>
+          <span>People</span>
         </button>
         <button className={`navButton ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
           <span className="material-symbols-outlined">person</span>

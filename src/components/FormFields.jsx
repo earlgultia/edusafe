@@ -1,7 +1,7 @@
 import React from 'react';
 
-function FormShell({ children, onSubmit, submit }) {
-  return <form className="form" onSubmit={(event) => { event.preventDefault(); onSubmit(); }}>{children}<button className="submitBtn" type="submit">{submit}</button></form>;
+function FormShell({ children, onSubmit, submit, submitDisabled = false }) {
+  return <form className="form" onSubmit={(event) => { event.preventDefault(); if (!submitDisabled) onSubmit(); }}>{children}<button className="submitBtn" type="submit" disabled={submitDisabled}>{submit}</button></form>;
 }
 
 function Field({ label, value, onChange, multiline }) {
