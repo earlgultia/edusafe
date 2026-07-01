@@ -98,8 +98,8 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
       <section className="authCard authPanel">
         <div className="authCardHead">
           <div>
-            <h2>Quick demo access</h2>
-            <p>Jump in with a role preview to see the workspace.</p>
+            <h2>Quick access</h2>
+            <p>Select your role and continue into the system.</p>
           </div>
           <ShieldCheck size={18} />
         </div>
@@ -111,8 +111,8 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
             </button>
           ))}
         </div>
-        <button className="submitBtn" onClick={() => signIn({ role, fullName: `${role} demo` })}>
-          <span>Open demo</span>
+        <button className="submitBtn" onClick={() => signIn({ role, fullName: `${role} User` })}>
+          <span>Continue</span>
           <ArrowRight size={16} />
         </button>
       </section>
@@ -121,7 +121,7 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
 }
 
 function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
-  const [form, setForm] = useState({ email: '', password: '', schoolId: '' });
+  const [form, setForm] = useState({ email: '', password: '' });
   const [feedback, setFeedback] = useState('');
   const inferredRole = inferRoleFromAccount(form.email, role);
 
@@ -135,7 +135,7 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
     }
 
     const authResult = await authenticateAccount({
-      schoolId: form.schoolId,
+      schoolId: '',
       email: form.email,
       password: form.password
     });
@@ -161,10 +161,6 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
       </section>
 
       <form className="authFormCard" onSubmit={handleSubmit}>
-        <label className="authField">
-          <span>School ID</span>
-          <div className="authInputWrap"><ShieldCheck size={16} /><input value={form.schoolId} onChange={(event) => setForm({ ...form, schoolId: event.target.value })} placeholder="ESP-2026-001" required /></div>
-        </label>
         <label className="authField">
           <span>Email</span>
           <div className="authInputWrap"><Mail size={16} /><input type="email" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="name@school.edu.ph" required /></div>

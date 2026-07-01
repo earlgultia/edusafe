@@ -33,13 +33,13 @@ function useAppSession() {
 
   const signIn = (account) => {
     const nextAccount = typeof account === 'string'
-      ? { role: account, fullName: 'Demo User', email: '' }
+      ? { role: account, fullName: 'User', email: '' }
       : account;
 
     setAuth({
       signedIn: true,
       role: nextAccount.role || 'Admin',
-      fullName: nextAccount.fullName || 'Demo User',
+      fullName: nextAccount.fullName || 'User',
       email: nextAccount.email || ''
     });
     setTab('dashboard');

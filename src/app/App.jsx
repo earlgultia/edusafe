@@ -32,9 +32,6 @@ function App() {
     <SignedInView
       role={role}
       userName={session.auth.fullName}
-      tab={session.tab}
-      setTab={session.setTab}
-      signIn={session.signIn}
       signOut={session.signOut}
       data={data}
       stats={stats}

@@ -23,11 +23,9 @@ function inferRoleFromAccount(email, fallbackRole = 'Parent') {
 }
 
 function validateLoginForm(values) {
-  const schoolId = String(values?.schoolId || '').trim();
   const email = String(values?.email || '').trim();
   const password = String(values?.password || '').trim();
 
-  if (!schoolId) return { ok: false, message: 'Please enter your school ID.' };
   if (!email) return { ok: false, message: 'Please enter your email address.' };
   if (!password) return { ok: false, message: 'Please enter your password.' };
 

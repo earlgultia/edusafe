@@ -1,15 +1,3 @@
-import { roleTabs } from '../appContent.js';
-
-const roleNames = Object.keys(roleTabs);
-
-function getAllowedTabs(role) {
-  return roleTabs[role] || roleTabs.Admin;
-}
-
-function isTabAllowed(role, tab) {
-  return getAllowedTabs(role).includes(tab);
-}
-
 function getDashboardStats(data) {
   return {
     total: data.students.length,
@@ -20,4 +8,4 @@ function getDashboardStats(data) {
   };
 }
 
-export { roleNames, getAllowedTabs, isTabAllowed, getDashboardStats };
+export { getDashboardStats };

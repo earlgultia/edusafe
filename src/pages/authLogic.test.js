@@ -13,9 +13,9 @@ test('falls back to the chosen role when no clear role hint exists', () => {
 });
 
 test('rejects empty login fields', () => {
-  const result = validateLoginForm({ schoolId: '', email: '', password: '' });
+  const result = validateLoginForm({ email: '', password: '' });
   assert.equal(result.ok, false);
-  assert.match(result.message, /school id/i);
+  assert.match(result.message, /email/i);
 });
 
 test('accepts a basic login payload when required fields are filled', () => {
