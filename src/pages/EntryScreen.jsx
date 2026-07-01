@@ -125,7 +125,7 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
   const [feedback, setFeedback] = useState('');
   const inferredRole = inferRoleFromAccount(form.email, role);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const result = validateLoginForm({ ...form, fallbackRole: role });
 
@@ -134,7 +134,7 @@ function LoginScreen({ role, setRole, onBack, onRegister, onSubmit }) {
       return;
     }
 
-    const authResult = authenticateAccount({
+    const authResult = await authenticateAccount({
       schoolId: form.schoolId,
       email: form.email,
       password: form.password
@@ -193,7 +193,7 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
   const [feedback, setFeedback] = useState('');
   const inferredRole = inferRoleFromAccount(form.email, role);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const result = validateRegisterForm({ ...form, fallbackRole: role });
 
@@ -202,7 +202,7 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
       return;
     }
 
-    const registerResult = registerAccount({
+    const registerResult = await registerAccount({
       fullName: form.fullName,
       email: form.email,
       schoolId: form.mobile,
