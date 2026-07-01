@@ -16,8 +16,8 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
     <div className="authScreen landingMode">
       <section className="landingHero">
         <div className="heroBadge">EduSafe PH</div>
-        <h1>Mobile school safety, attendance, and pickup control in one app.</h1>
-        <p>Built for Philippine schools that need a clean parent, teacher, guard, and admin workflow on mobile.</p>
+        <h1>Safe school access, attendance, and pickup in one app.</h1>
+        <p>Simple mobile workflows for parents, teachers, guards, and school staff.</p>
 
         <div className="heroActions">
           <button className="submitBtn" onClick={() => setView('login')}>Sign in</button>
@@ -63,15 +63,15 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
         <div className="authCardHead">
           <div>
             <h2>Quick access</h2>
-            <p>Use your existing EduSafe account to sign in, or create a new one with your selected role.</p>
+            <p>Sign in or create a profile to start using EduSafe mobile tools.</p>
           </div>
           <ShieldCheck size={18} />
         </div>
         <button className="submitBtn" onClick={() => setView('login')}>
-          <span>Continue to sign in</span>
+          <span>Continue</span>
           <ArrowRight size={16} />
         </button>
-        <p className="miniNote">Register first to select your role, then sign in with that account.</p>
+        <p className="miniNote">Register to choose your role and access your dashboard.</p>
       </section>
     </div>
   );

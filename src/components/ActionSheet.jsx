@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import { StudentForm } from './forms/StudentForm.jsx';
 import { TeacherForm } from './forms/TeacherForm.jsx';
 import { GuardianForm } from './forms/GuardianForm.jsx';
+import { InstitutionalGuardianForm } from './forms/InstitutionalGuardianForm.jsx';
 import { SchoolForm } from './forms/SchoolForm.jsx';
 import { AttendanceForm } from './forms/AttendanceForm.jsx';
 import { PickupForm } from './forms/PickupForm.jsx';
@@ -21,6 +22,7 @@ function ActionSheet({ sheet, close, data, actions }) {
     student: 'Add Student',
     teacher: 'Add Teacher',
     guardian: 'Add Guardian',
+    institutional_guardian: 'Add Institutional Guardian',
       school: 'School Setup',
     clinic: 'Clinic Record',
     announcement: 'Publish Announcement',
@@ -50,6 +52,7 @@ function ActionSheet({ sheet, close, data, actions }) {
         {sheet === 'release' && <ReleaseForm close={close} actions={actions} data={data} />}
         {sheet === 'teacher' && <TeacherForm close={close} actions={actions} />}
         {sheet === 'guardian' && <GuardianForm close={close} actions={actions} data={data} />}
+        {sheet === 'institutional_guardian' && <InstitutionalGuardianForm close={close} actions={actions} data={data} />}
         {sheet === 'guardian_qr' && <GuardianQrSheet close={close} data={data} />}
         {sheet === 'school' && <SchoolForm close={close} actions={actions} data={data} />}
         {sheet === 'form' && <BasicForm close={close} message="Digital form published to selected audience." />}

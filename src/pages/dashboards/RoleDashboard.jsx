@@ -3,7 +3,7 @@ import { AdminDashboard } from './AdminDashboard.jsx';
 import { ParentDashboard } from './ParentDashboard.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 
-function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setSheet }) {
+function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setSheet, actions }) {
   const [activeTab, setActiveTab] = useState('home');
   const students = data.students || [];
   const announcements = data.announcements || [];
@@ -12,7 +12,9 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
   const present = students.filter((student) => student.status === 'Present').length;
   const absent = students.filter((student) => student.status === 'Absent').length;
   const late = students.filter((student) => student.status === 'Late').length;
+  const verifiedGuardians = (data.guardians || []).filter((guardian) => guardian.verified).length;
   const recentStudents = students.slice(0, 3);
+  const guardianQueue = (data.guardians || []).slice(0, 3);
 
   const activity = useMemo(() => {
     return [
@@ -54,6 +56,50 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
               ))}
               {!announcements.length && <p className="emptyText">No announcements yet.</p>}
             </div>
+          </section>
+        );
+      case 'release':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <h2>Release queue</h2>
+              <button className="smallBtn" type="button" onClick={() => setActiveTab('home')}>Dashboard</button>
+            </div>
+            <section className="featureList">
+              <article className="featureCard">
+                <h3>Verified guardians</h3>
+                <p>{verifiedGuardians} guardians ready for pickup approval.</p>
+              </article>
+              <article className="featureCard">
+                <h3>Students pending release</h3>
+                <p>{guardianQueue.length} awaiting guardian pickup.</p>
+              </article>
+            </section>
+            <section className="verifyList">
+              {(data.guardians || []).map((guardian) => {
+                const student = (data.students || []).find((s) => s.id === guardian.studentId);
+                return (
+                  <article key={guardian.id} className="verifyCard">
+                    <div className="qrBox">
+                      <span className="material-symbols-outlined">qr_code</span>
+                    </div>
+                    <div>
+                      <h3>{guardian.name}</h3>
+                      <p>{guardian.relation} for {student?.name || 'Unknown student'}</p>
+                      <small>{guardian.qr}</small>
+                    </div>
+                    <button
+                      className={guardian.verified ? 'smallBtn' : 'smallBtn disabled'}
+                      type="button"
+                      onClick={() => { if (guardian.verified) { actions.releaseStudent(guardian.id); setActiveTab('home'); } }}
+                    >
+                      {guardian.verified ? 'Release' : 'Denied'}
+                    </button>
+                  </article>
+                );
+              })}
+              {!guardianQueue.length && <p className="emptyText">No guardians queued for release.</p>}
+            </section>
           </section>
         );
       default:
@@ -124,6 +170,13 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
                 </div>
                 <small>Comms</small>
               </button>
+              <button type="button" className="workflowCard" onClick={() => setActiveTab('release')}>
+                <div>
+                  <h3>Release student</h3>
+                  <p>Approve verified guardian pickup.</p>
+                </div>
+                <small>Release</small>
+              </button>
             </section>
             <section className="featureList">
               {recentStudents.map((student) => (
@@ -174,6 +227,10 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
         <button className={`navButton ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
           <span className="material-symbols-outlined">people</span>
           <span>People</span>
+        </button>
+        <button className={`navButton ${activeTab === 'release' ? 'active' : ''}`} onClick={() => setActiveTab('release')}>
+          <span className="material-symbols-outlined">send</span>
+          <span>Release</span>
         </button>
         <button className={`navButton ${activeTab === 'comms' ? 'active' : ''}`} onClick={() => setActiveTab('comms')}>
           <span className="material-symbols-outlined">chat</span>
@@ -362,10 +419,10 @@ function NurseDashboard({ data = {}, userName = 'Nurse', setSheet }) {
   );
 }
 
-function RoleDashboard({ role, data, stats, userName, setSheet, signOut }) {
+function RoleDashboard({ role, data, stats, userName, setSheet, signOut, actions }) {
   switch (role) {
     case 'Teacher':
-      return <TeacherDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} />;
+      return <TeacherDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} actions={actions} />;
     case 'Parent':
       return <ParentDashboard data={data} userName={userName} setSheet={setSheet} signOut={signOut} />;
     case 'Guard':

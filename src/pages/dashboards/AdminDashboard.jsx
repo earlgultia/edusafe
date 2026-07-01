@@ -78,6 +78,13 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                   <small>Create a faculty account</small>
                 </div>
               </button>
+              <button className="registerActionButton" type="button" onClick={() => openSheet('institutional_guardian')}>
+                <span className="material-symbols-outlined actionIcon">domain</span>
+                <div>
+                  <strong>Add Institutional Guardian</strong>
+                  <small>Register school-authorized pick-up personnel</small>
+                </div>
+              </button>
               <button className="registerActionButton" type="button" onClick={() => openSheet('guardian')}>
                 <span className="material-symbols-outlined actionIcon">family_restroom</span>
                 <div>
@@ -320,7 +327,6 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
           <section className="tabPage">
             <div className="sectionHeader">
               <h2>People registry</h2>
-              <button className="smallBtn" type="button" onClick={() => setActiveTab('register')}>Back</button>
             </div>
             <PeopleSheet data={data} />
           </section>
@@ -366,7 +372,6 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
         return (
           <>
             <section className="sectionTitleBlock">
-              <span>{currentDate} • {schoolType}</span>
               <h2>{schoolName}</h2>
             </section>
 

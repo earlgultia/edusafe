@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 function PeopleSheet({ close, data }) {
   const [activeTab, setActiveTab] = useState('students');
   const [query, setQuery] = useState('');
+  const [guardianFilter, setGuardianFilter] = useState('all');
 
   const students = data.students || [];
   const teachers = data.teachers || [];
@@ -13,12 +14,18 @@ function PeopleSheet({ close, data }) {
       keys.some((key) => String(item[key] || '').toLowerCase().includes(query.toLowerCase()))
     );
 
+    const filteredGuardians = filterItems(guardians, ['name', 'relation', 'phone', 'qr', 'institution']).filter((guardian) => {
+      if (guardianFilter === 'institutional') return Boolean(guardian.institution);
+      if (guardianFilter === 'family') return !guardian.institution;
+      return true;
+    });
+
     return {
       students: filterItems(students, ['name', 'grade', 'section', 'guardian', 'status']),
       teachers: filterItems(teachers, ['name', 'position', 'advisory', 'email', 'employeeNo']),
-      guardians: filterItems(guardians, ['name', 'relation', 'phone', 'qr'])
+      guardians: filteredGuardians
     };
-  }, [query, students, teachers, guardians]);
+  }, [query, students, teachers, guardians, guardianFilter]);
 
   const lists = {
     students: filtered.students,
@@ -54,6 +61,16 @@ function PeopleSheet({ close, data }) {
             </button>
           ))}
         </div>
+        {activeTab === 'guardians' && (
+          <label className="field">
+            <span>Guardian type</span>
+            <select value={guardianFilter} onChange={(event) => setGuardianFilter(event.target.value)}>
+              <option value="all">All guardians</option>
+              <option value="family">Family / Trusted adults</option>
+              <option value="institutional">Institutional guardians</option>
+            </select>
+          </label>
+        )}
         <label className="field searchField">
           <span>Search</span>
           <input
@@ -77,7 +94,7 @@ function PeopleSheet({ close, data }) {
                 <p>
                   {activeTab === 'students' && `${item.grade} • ${item.section}`}
                   {activeTab === 'teachers' && item.position}
-                  {activeTab === 'guardians' && item.relation}
+                  {activeTab === 'guardians' && (item.institution ? `Institution: ${item.institution}` : item.relation)}
                 </p>
               </div>
               <span>

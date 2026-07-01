@@ -834,14 +834,12 @@ progress::-webkit-progress-value {
 .landingHero {
   position: relative;
   display: grid;
-  gap: 1.5rem;
-  padding: 24px 18px;
-  border-radius: 8px;
+  gap: 1.1rem;
+  padding: 22px 18px;
+  border-radius: 22px;
   color: #fff;
-  background:
-    linear-gradient(140deg, #1d4ed8, #0f766e),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='.08'%3E%3Cpath d='M0 0h36v36H0zM72 0h12v12H72zM48 24h24v24H48zM96 24h24v24H96zM0 48h12v12H0zM24 48h24v24H24zM72 48h36v36H72zM0 84h24v24H0zM36 84h12v12H36zM84 84h36v36H84z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") center/cover;
-  box-shadow: 0 18px 40px rgba(15, 31, 30, 0.12);
+  background: linear-gradient(140deg, #2563eb 0%, #0f766e 100%);
+  box-shadow: 0 20px 40px rgba(15, 31, 30, 0.12);
   overflow: hidden;
 }
 
@@ -864,15 +862,15 @@ progress::-webkit-progress-value {
 
 .landingSection {
   display: grid;
-  gap: 16px;
-  padding: 0 8px;
+  gap: 14px;
+  padding: 0 12px;
   min-width: 0;
   width: 100%;
 }
 
 .landingCards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
   min-width: 0;
 }
@@ -914,63 +912,73 @@ progress::-webkit-progress-value {
 
 .landingHero h1 {
   margin: 0;
-  font-size: 1.72rem;
-  line-height: 1.04;
+  font-size: 1.6rem;
+  line-height: 1.15;
   letter-spacing: -0.03em;
 }
 
 .landingHero p {
-  margin: 12px 0 0;
-  color: rgba(255, 255, 255, 0.92);
-  font-size: 0.92rem;
-  line-height: 1.5;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.96rem;
+  line-height: 1.55;
+  max-width: 90%;
 }
 
 .heroActions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 10px;
-  margin-top: 18px;
+  margin-top: 14px;
 }
 
 .heroActions button {
-  flex: 1;
+  min-height: 46px;
+  border-radius: 16px;
 }
 
 .ghostBtn {
-  min-height: 46px;
-  border-radius: 8px;
   color: #1d4ed8;
-  background: #ffffff;
-  border: 1px solid #dbe5e1;
-  font-weight: 900;
+  background: rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-weight: 700;
+}
+
+.submitBtn {
+  min-height: 46px;
+  border-radius: 16px;
 }
 
 .proofStrip {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
   margin-top: 18px;
 }
 
 .proofCard {
+  display: grid;
+  gap: 4px;
   padding: 14px 12px;
-  border-radius: 16px;
-  background: #eef4ff;
-  border: 1px solid #dbe5e1;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .proofCard strong {
   display: block;
-  margin-bottom: 6px;
+  margin: 0;
   font-size: 1rem;
-  color: #0f3e82;
-  letter-spacing: -0.02em;
+  color: #ffffff;
+  letter-spacing: -0.01em;
 }
 
 .proofCard span {
-  color: #334155;
+  margin: 0;
+  color: rgba(255, 255, 255, 0.75);
   font-size: 0.72rem;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .landingSection {
@@ -982,19 +990,19 @@ progress::-webkit-progress-value {
 
 .landingCards {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
   min-width: 0;
 }
 
 .landingCard {
   position: relative;
-  min-height: 150px;
-  padding: 24px 18px 18px;
-  border-radius: 18px;
+  min-height: 130px;
+  padding: 18px 16px 16px;
+  border-radius: 24px;
   background: #ffffff;
-  border: 1px solid #dbe5e1;
-  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.09);
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.08);
   overflow: hidden;
 }
 
@@ -1017,8 +1025,10 @@ progress::-webkit-progress-value {
 .landingCard p {
   margin: 0;
   color: #475569;
-  font-size: 0.9rem;
-  line-height: 1.5;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  max-height: 3em;
+  overflow: hidden;
 }
 
 .landingPreview {

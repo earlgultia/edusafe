@@ -8,7 +8,7 @@ function SignedInView({ role, userName, signOut, data, stats, actions, sheet, se
       <AppChrome role={role} userName={userName} onSignOut={signOut} />
 
       <main className="screen">
-        <RoleDashboard role={role} data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} />
+        <RoleDashboard role={role} data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} actions={actions} />
       </main>
 
       {sheet && <ActionSheet sheet={sheet} close={() => setSheet(null)} data={data} actions={actions} />}
