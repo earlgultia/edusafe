@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ArrowRight, Lock, Mail, ShieldCheck, UserPlus } from 'lucide-react';
+import { ArrowRight, BellRing, BookOpenCheck, Clock3, Eye, EyeOff, Lock, Mail, ShieldCheck, Smartphone, Users2, UserPlus } from 'lucide-react';
 import { landingFeatures, landingProof, landingStats, mvpScreens, roleProfiles } from '../appContent.js';
 import { authenticateAccount, registerAccount } from './authAccounts.js';
 import { inferRoleFromAccount, validateLoginForm, validateRegisterForm } from './authLogic.js';
@@ -14,71 +14,97 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
 
   return (
     <div className="authScreen landingMode">
-      <section className="landingHero">
-        <div className="heroBadge">EduSafe PH</div>
-        <h1>Safe school access, attendance, and pickup in one app.</h1>
-        <p>Simple mobile workflows for parents, teachers, guards, and school staff.</p>
+      <div className="landingShell">
+        <section className="landingHero">
+          <div className="heroTopLine">
+            <span className="heroBadge"><ShieldCheck size={14} /> EduSafe PH</span>
+            <span className="heroBadge ghostPill">Mobile-ready</span>
+          </div>
+          <h1>Safe school access, attendance, and pickup in one app.</h1>
+          <p>Simple mobile workflows for parents, teachers, guards, and school staff.</p>
 
-        <div className="heroActions">
+          <div className="heroBullets">
+            <span><ShieldCheck size={14} /> Secure sign-in</span>
+            <span><Clock3 size={14} /> Fast check-ins</span>
+            <span><BellRing size={14} /> Instant alerts</span>
+          </div>
+
+          <div className="heroActions">
+            <button className="submitBtn" onClick={() => setView('login')}>
+              <span>Sign in</span>
+              <ArrowRight size={16} />
+            </button>
+            <button className="ghostBtn" onClick={() => setView('register')}>
+              <UserPlus size={16} />
+              <span>Create account</span>
+            </button>
+          </div>
+
+          <div className="proofStrip">
+            {landingProof.map((item) => (
+              <article key={item.label} className="proofCard">
+                <strong>{item.value}</strong>
+                <span>{item.label}</span>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="landingSection">
+          <div className="sectionTitleBlock">
+            <span>Made for every school role</span>
+            <h2>Everything your team needs, packed into a simple mobile experience.</h2>
+          </div>
+          <div className="landingCards">
+            {landingFeatures.map((feature, index) => {
+              const iconMap = [
+                <Smartphone size={16} key="smartphone" />,
+                <Users2 size={16} key="users" />,
+                <BookOpenCheck size={16} key="book" />,
+                <BellRing size={16} key="bell" />
+              ];
+              return (
+                <article key={feature.title} className="landingCard">
+                  <span className="cardAccent" />
+                  <div className="landingCardIcon">{iconMap[index] || <ShieldCheck size={16} />}</div>
+                  <h3>{feature.title}</h3>
+                  <p>{feature.text}</p>
+                </article>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="landingSection landingPreview">
+          <div className="sectionTitleBlock">
+            <span>Fast workflows</span>
+            <h2>Start in seconds with role-based screens built for daily use.</h2>
+          </div>
+          <div className="workflowList compact">
+            {mvpScreens.slice(0, 4).map((screen) => (
+              <article key={screen.title} className="workflowCard smallCard">
+                <h3>{screen.title}</h3>
+                <small>{screen.role}</small>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="authCard authPanel">
+          <div className="authCardHead">
+            <div>
+              <h2>Quick access</h2>
+              <p>Sign in or create a profile to start using EduSafe mobile tools.</p>
+            </div>
+            <ShieldCheck size={18} />
+          </div>
           <button className="submitBtn" onClick={() => setView('login')}>
-            <span>Sign in</span>
+            <span>Continue</span>
             <ArrowRight size={16} />
           </button>
-          <button className="ghostBtn" onClick={() => setView('register')}>
-            <UserPlus size={16} />
-            <span>Create account</span>
-          </button>
-        </div>
-
-        <div className="proofStrip">
-          {landingProof.map((item) => (
-            <article key={item.label} className="proofCard">
-              <strong>{item.value}</strong>
-              <span>{item.label}</span>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="landingSection landingCards">
-        {landingFeatures.map((feature) => (
-          <article key={feature.title} className="landingCard">
-            <span className="cardAccent" />
-            <h3>{feature.title}</h3>
-            <p>{feature.text}</p>
-          </article>
-        ))}
-      </section>
-
-      <section className="landingSection landingPreview">
-        <div className="sectionTitleBlock">
-          <span>Fast workflows</span>
-          <h2>Visual role journeys for every school team.</h2>
-        </div>
-        <div className="workflowList compact">
-          {mvpScreens.slice(0, 4).map((screen) => (
-            <article key={screen.title} className="workflowCard smallCard">
-              <h3>{screen.title}</h3>
-              <small>{screen.role}</small>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="authCard authPanel">
-        <div className="authCardHead">
-          <div>
-            <h2>Quick access</h2>
-            <p>Sign in or create a profile to start using EduSafe mobile tools.</p>
-          </div>
-          <ShieldCheck size={18} />
-        </div>
-        <button className="submitBtn" onClick={() => setView('login')}>
-          <span>Continue</span>
-          <ArrowRight size={16} />
-        </button>
-        <p className="miniNote">Register to choose your role and access your dashboard.</p>
-      </section>
+          <p className="miniNote">Register to choose your role and access your dashboard.</p>
+        </section>
+      </div>
     </div>
   );
 }
@@ -86,6 +112,7 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
 function LoginScreen({ role, onBack, onRegister, onSubmit }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [feedback, setFeedback] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -129,7 +156,13 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
         </label>
         <label className="authField">
           <span>Password</span>
-          <div className="authInputWrap"><Lock size={16} /><input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Enter password" required /></div>
+          <div className="authInputWrap">
+            <Lock size={16} />
+            <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Enter password" required />
+            <button type="button" className="passwordToggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </label>
 
         {feedback ? <p className="authFeedback">{feedback}</p> : null}
@@ -145,6 +178,8 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
   const [form, setForm] = useState({ fullName: '', email: '', mobile: '', password: '', confirmPassword: '' });
   const [feedback, setFeedback] = useState('');
   const [showRoleModal, setShowRoleModal] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const inferredRole = inferRoleFromAccount(form.email, role);
   const availableRoles = Object.keys(roleProfiles);
 
@@ -202,11 +237,23 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
         </label>
         <label className="authField">
           <span>Password</span>
-          <div className="authInputWrap"><Lock size={16} /><input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Create password" required /></div>
+          <div className="authInputWrap">
+            <Lock size={16} />
+            <input type={showPassword ? 'text' : 'password'} value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} placeholder="Create password" required />
+            <button type="button" className="passwordToggle" onClick={() => setShowPassword((value) => !value)} aria-label={showPassword ? 'Hide password' : 'Show password'}>
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </label>
         <label className="authField">
           <span>Confirm password</span>
-          <div className="authInputWrap"><Lock size={16} /><input type="password" value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} placeholder="Repeat password" required /></div>
+          <div className="authInputWrap">
+            <Lock size={16} />
+            <input type={showConfirmPassword ? 'text' : 'password'} value={form.confirmPassword} onChange={(event) => setForm({ ...form, confirmPassword: event.target.value })} placeholder="Repeat password" required />
+            <button type="button" className="passwordToggle" onClick={() => setShowConfirmPassword((value) => !value)} aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}>
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </label>
 
         <button type="button" className="roleSelectBtn" onClick={() => setShowRoleModal(true)}>

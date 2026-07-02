@@ -25,6 +25,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
     () => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
     []
   );
+  const notificationCount = (data.announcements || []).length;
 
   const activity = useMemo(() => {
     const announcements = (data.announcements || []).slice(0, 2).map((item) => ({
@@ -371,8 +372,35 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
       default:
         return (
           <>
-            <section className="sectionTitleBlock">
-              <h2>{schoolName}</h2>
+            <section className="sectionTitleBlock sectionTitleRow">
+              <div>
+                <span>Dashboard overview</span>
+                <h2>{schoolName}</h2>
+                <p className="metricText">{currentDate}</p>
+              </div>
+              <div className="notificationBadge">
+                <p className="notificationLabel">School-wide notifications</p>
+                <p className="overviewValue">{notificationCount}</p>
+              </div>
+            </section>
+
+            <section className="overviewRow">
+              <article className="overviewCard">
+                <p className="overviewLabel">Visitors on campus</p>
+                <p className="overviewValue">{visitors}</p>
+              </article>
+              <article className="overviewCard">
+                <p className="overviewLabel">Pending forms</p>
+                <p className="overviewValue">{pendingForms}</p>
+              </article>
+              <article className="overviewCard">
+                <p className="overviewLabel">Pickup queue</p>
+                <p className="overviewValue">{pendingPickups}</p>
+              </article>
+              <article className="overviewCard">
+                <p className="overviewLabel">Active teachers</p>
+                <p className="overviewValue">{teachers}</p>
+              </article>
             </section>
 
             <section className="metricGrid">
@@ -418,22 +446,22 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
               </article>
             </section>
 
-            <section className="featureList">
-              <article className="featureCard">
+            <section className="metricGrid">
+              <article className="summaryCard">
                 <h3>Active Teachers</h3>
-                <p>{teachers} accounts ready for attendance and dismissal.</p>
+                <p>{teachers}</p>
               </article>
-              <article className="featureCard">
-                <h3>Pending Forms</h3>
-                <p>{pendingForms} parent responses awaiting completion.</p>
-              </article>
-              <article className="featureCard">
+              <article className="summaryCard">
                 <h3>Clinic Visits</h3>
-                <p>{clinicVisits} health records logged today.</p>
+                <p>{clinicVisits}</p>
               </article>
-              <article className="featureCard">
-                <h3>Incident Reports</h3>
-                <p>{incidentsCount} active safety notes in the system.</p>
+              <article className="summaryCard">
+                <h3>Pending Digital Forms</h3>
+                <p>{pendingForms}</p>
+              </article>
+              <article className="summaryCard">
+                <h3>Guardian Pickup Queue</h3>
+                <p>{pendingPickups}</p>
               </article>
             </section>
 

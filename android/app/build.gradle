@@ -1,0 +1,60 @@
+import org.apache.tools.ant.taskdefs.condition.Os
+
+apply plugin: 'com.android.application'
+
+android {
+    namespace 'com.edusafe.mobile'
+    compileSdk 34
+
+    aaptOptions {
+        ignoreAssetsPattern '!.svn:!.git:!CVS:!thumbs.db:!*.txt'
+    }
+
+    packaging {
+        resources {
+            excludes += ['**/*.txt']
+        }
+    }
+
+    defaultConfig {
+        applicationId 'com.edusafe.mobile'
+        minSdk 23
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+    }
+}
+
+tasks.register('buildWebApp', Exec) {
+    workingDir rootProject.projectDir.parentFile
+    commandLine Os.isFamily(Os.FAMILY_WINDOWS) ? ['npm.cmd', 'run', 'build'] : ['npm', 'run', 'build']
+}
+
+tasks.register('copyWebApp', Copy) {
+    dependsOn 'buildWebApp'
+    from "${rootProject.projectDir.parentFile}/dist"
+    into "${projectDir}/src/main/assets/www"
+}
+
+tasks.register('removeStrayResourceTxtFiles', Delete) {
+    delete fileTree(dir: 'src/main/res', include: '**/*.txt')
+}
+
+tasks.register('ensureMdpiLauncher') {
+    doLast {
+        def mdpiDir = file('src/main/res/mipmap-mdpi')
+        if (!mdpiDir.exists()) {
+            mdpiDir.mkdirs()
+        }
+        def targetFile = file('src/main/res/mipmap-mdpi/ic_launcher.png')
+        if (!targetFile.exists()) {
+            copy {
+                from file('src/main/res/mipmap-hdpi/ic_launcher.png')
+                into mdpiDir
+            }
+            println 'Copied ic_launcher.png to mipmap-mdpi'
+        }
+    }
+}
+
+preBuild.dependsOn 'copyWebApp', 'removeStrayResourceTxtFiles', 'ensureMdpiLauncher'
