@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 
 import { createAppActions } from './appActions.js';
 import { getDashboardStats } from './appViewModel.js';
@@ -14,7 +14,30 @@ function App() {
 
   const stats = useMemo(() => getDashboardStats(data), [data]);
 
-  const actions = createAppActions(setData);
+  const actions = useMemo(() => createAppActions(setData), [setData]);
+
+  useEffect(() => {
+    const loadLostFound = async () => {
+      try {
+        const res = await fetch('/api/lostfound');
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!Array.isArray(json.items)) return;
+
+        const currentIds = (data.lostFound || []).map((item) => item.id);
+        const merged = [
+          ...json.items,
+          ...(data.lostFound || []).filter((item) => !currentIds.includes(item.id))
+        ];
+
+        actions.setLostFound(merged);
+      } catch (e) {
+        // fallback to local store
+      }
+    };
+
+    loadLostFound();
+  }, [actions]);
 
   if (!session.auth.signedIn) {
     return (
@@ -32,6 +55,8 @@ function App() {
     <SignedInView
       role={role}
       userName={session.auth.fullName}
+      auth={session.auth}
+      setAuth={session.setAuth}
       signOut={session.signOut}
       data={data}
       stats={stats}

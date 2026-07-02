@@ -16,6 +16,7 @@ import { EmergencyForm } from './forms/EmergencyForm.jsx';
 import { EventForm } from './forms/EventForm.jsx';
 import { ReleaseForm } from './forms/ReleaseForm.jsx';
 import { BasicForm } from './forms/BasicForm.jsx';
+import { LostFoundForm } from './forms/LostFoundForm.jsx';
 import { GuardianQrSheet } from './forms/GuardianQrSheet.jsx';
 
 function ActionSheet({ sheet, close, data, actions }) {
@@ -59,7 +60,7 @@ function ActionSheet({ sheet, close, data, actions }) {
         {sheet === 'guardian_qr' && <GuardianQrSheet close={close} data={data} />}
         {sheet === 'school' && <SchoolForm close={close} actions={actions} data={data} />}
         {sheet === 'form' && <BasicForm close={close} message="Digital form published to selected audience." />}
-        {sheet === 'lost' && <BasicForm close={close} message="Lost item published for parent and student review." />}
+        {sheet === 'lost' && <LostFoundForm close={close} actions={actions} />}
       </div>
     </div>
   );

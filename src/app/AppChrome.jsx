@@ -1,7 +1,9 @@
 import { LogOut } from 'lucide-react';
 import { today } from '../appContent.js';
+import { Notifications } from '../components/Notifications.jsx';
+import { Toast } from '../components/Toast.jsx';
 
-function AppChrome({ role, userName, onSignOut }) {
+function AppChrome({ role, userName, onSignOut, data, actions }) {
   const title = {
     Admin: 'Admin Dashboard',
     Teacher: 'Teacher Workspace',
@@ -21,11 +23,13 @@ function AppChrome({ role, userName, onSignOut }) {
       </div>
 
       <div className="topbarActions">
+        <Notifications notifications={data?.notifications} actions={actions} />
         <div className="userMeta">
           <span className="sessionRole">{role}</span>
           <span className="sessionUser">{userName}</span>
         </div>
       </div>
+      <Toast />
     </header>
   );
 }

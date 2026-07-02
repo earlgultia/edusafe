@@ -12,6 +12,7 @@ const initialData = {
   pickupLog: [],
   forms: [],
   events: [],
+  notifications: [],
   lostFound: [],
   emergency: []
 };

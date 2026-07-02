@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
+import { ReportPreview } from '../../components/ReportPreview.jsx';
 
-function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, signOut }) {
+function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, signOut, actions }) {
   const [activeTab, setActiveTab] = useState('home');
   const school = data.school || {};
   const schoolName = school.name || 'School profile not set';
@@ -51,6 +52,136 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
   const recentGuardians = (data.guardians || []).slice(0, 3);
 
   const openSheet = (name) => setSheet?.(name);
+
+  const downloadFile = (filename, content, mime = 'text/csv') => {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  };
+
+  const exportReport = (reportKey, format = 'csv') => {
+    const rows = [];
+    const addRowsFrom = (arr, cols) => {
+      rows.push(cols.join(','));
+      (arr || []).forEach((item) => {
+        rows.push(cols.map((c) => (`"${(item[c] ?? '').toString().replace(/"/g, '""')}"`)).join(','));
+      });
+    };
+
+    switch (reportKey) {
+      case 'dailyAttendance':
+        addRowsFrom(data.attendanceLog || [], ['date', 'time', 'student', 'studentId', 'status']);
+        break;
+      case 'monthlyAttendance':
+        addRowsFrom(data.attendanceLog || [], ['date', 'time', 'student', 'studentId', 'status']);
+        break;
+      case 'studentAbsences':
+        addRowsFrom((data.attendanceLog || []).filter((r) => r.status === 'Absent'), ['date', 'time', 'student', 'studentId', 'status']);
+        break;
+      case 'lateStudents':
+        addRowsFrom((data.attendanceLog || []).filter((r) => r.status === 'Late'), ['date', 'time', 'student', 'studentId', 'status']);
+        break;
+      case 'visitorLogs':
+        addRowsFrom(data.visitors || [], ['id', 'name', 'purpose', 'timeIn', 'timeOut', 'status']);
+        break;
+      case 'clinicReports':
+        addRowsFrom(data.clinic || [], ['id', 'student', 'reason', 'time', 'notes']);
+        break;
+      case 'incidentReports':
+        addRowsFrom(data.incidents || [], ['id', 'type', 'student', 'status', 'date']);
+        break;
+      case 'pickupLogs':
+        addRowsFrom(data.pickupLog || [], ['id', 'student', 'guardian', 'status', 'time', 'date']);
+        break;
+      case 'lostFound':
+        addRowsFrom(data.lostFound || [], ['id', 'item', 'foundBy', 'date', 'status']);
+        break;
+      default:
+        addRowsFrom(data.attendanceLog || [], ['date', 'time', 'student', 'studentId', 'status']);
+    }
+
+    const content = rows.join('\n');
+    const name = `${reportKey}-${new Date().toISOString().slice(0,10)}`;
+
+    if (format === 'excel') {
+      downloadFile(`${name}.csv`, content, 'text/csv');
+    } else if (format === 'pdf') {
+      const w = window.open('', '_blank');
+      w.document.write(`<html><head><title>${name}</title></head><body><pre>${content.replace(/</g,'&lt;')}</pre></body></html>`);
+      w.document.close();
+      w.focus();
+      w.print();
+    } else {
+      downloadFile(`${name}.csv`, content, 'text/csv');
+    }
+  };
+
+  const prepareCSV = (reportKey) => {
+    const rows = [];
+    const addRowsFrom = (arr, cols) => {
+      rows.push(cols.join(','));
+      (arr || []).forEach((item) => {
+        rows.push(cols.map((c) => (`"${(item[c] ?? '').toString().replace(/"/g, '""')}"`)).join(','));
+      });
+    };
+
+    switch (reportKey) {
+      case 'dailyAttendance':
+      case 'monthlyAttendance':
+        addRowsFrom(data.attendanceLog || [], ['date', 'time', 'student', 'studentId', 'status']);
+        break;
+      case 'studentAbsences':
+        addRowsFrom((data.attendanceLog || []).filter((r) => r.status === 'Absent'), ['date', 'time', 'student', 'studentId', 'status']);
+        break;
+      case 'lateStudents':
+        addRowsFrom((data.attendanceLog || []).filter((r) => r.status === 'Late'), ['date', 'time', 'student', 'studentId', 'status']);
+        break;
+      case 'visitorLogs':
+        addRowsFrom(data.visitors || [], ['id', 'name', 'purpose', 'timeIn', 'timeOut', 'status']);
+        break;
+      case 'clinicReports':
+        addRowsFrom(data.clinic || [], ['id', 'student', 'reason', 'time', 'notes']);
+        break;
+      case 'incidentReports':
+        addRowsFrom(data.incidents || [], ['id', 'type', 'student', 'status', 'date']);
+        break;
+      case 'pickupLogs':
+        addRowsFrom(data.pickupLog || [], ['id', 'student', 'guardian', 'status', 'time', 'date']);
+        break;
+      case 'lostFound':
+        addRowsFrom(data.lostFound || [], ['id', 'item', 'foundBy', 'date', 'status']);
+        break;
+      default:
+        addRowsFrom(data.attendanceLog || [], ['date', 'time', 'student', 'studentId', 'status']);
+    }
+
+    return rows.join('\n');
+  };
+
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewCsv, setPreviewCsv] = useState('');
+  const [previewTitle, setPreviewTitle] = useState('');
+  const [previewKey, setPreviewKey] = useState('');
+
+  const openPreview = (key, title) => {
+    setPreviewTitle(title);
+    setPreviewCsv(prepareCSV(key));
+    setPreviewKey(key);
+    setPreviewOpen(true);
+  };
+
+  const serverExportMock = (reportKey) => {
+    // simulate server generation delay then trigger download
+    setTimeout(() => {
+      exportReport(reportKey, 'excel');
+    }, 700);
+  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -321,6 +452,57 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
               ))}
               {!(data.visitors || []).length && !(data.incidents || []).length && <p className="emptyText">No safety logs yet.</p>}
             </div>
+
+            <section className="sectionHeader">
+              <h2>Reports</h2>
+            </section>
+
+            <section className="reportGrid">
+              <button type="button" className="reportCard" onClick={() => openPreview('dailyAttendance', 'Daily Attendance')}>
+                <h3>Daily Attendance</h3>
+                <p>Summary of student attendance for today.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('monthlyAttendance', 'Monthly Attendance')}>
+                <h3>Monthly Attendance</h3>
+                <p>Attendance trends and monthly totals.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('studentAbsences', 'Student Absences')}>
+                <h3>Student Absences</h3>
+                <p>Absence records by student and date.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('lateStudents', 'Late Students')}>
+                <h3>Late Students</h3>
+                <p>Students who arrived late today.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('visitorLogs', 'Visitor Logs')}>
+                <h3>Visitor Logs</h3>
+                <p>All campus visitor entries and exits.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('clinicReports', 'Clinic Reports')}>
+                <h3>Clinic Reports</h3>
+                <p>Health visits and clinic summaries.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('incidentReports', 'Incident Reports')}>
+                <h3>Incident Reports</h3>
+                <p>Safety incidents with status and follow-up.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('pickupLogs', 'Pickup Logs')}>
+                <h3>Pickup Logs</h3>
+                <p>Guardian pickup and release history.</p>
+              </button>
+              <button type="button" className="reportCard" onClick={() => openPreview('lostFound', 'Lost & Found Reports')}>
+                <h3>Lost & Found Reports</h3>
+                <p>Missing items and recovery records.</p>
+              </button>
+            </section>
+
+            <section className="sectionHeader">
+              <h2>Export options</h2>
+              <div>
+                <button className="smallBtn" type="button" onClick={() => exportReport('monthlyAttendance', 'pdf')}>PDF</button>
+                <button className="smallBtn" type="button" onClick={() => exportReport('monthlyAttendance', 'excel')}>Excel</button>
+              </div>
+            </section>
           </section>
         );
       case 'people':
@@ -551,6 +733,46 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
               ))}
               {!activity.length && <p className="emptyText">No recent notifications yet.</p>}
             </section>
+            <section className="sectionHeader">
+              <h2>Lost & Found — Claims</h2>
+              <p className="sectionNote">Review claims and verify returned items.</p>
+            </section>
+            <div className="featureList">
+              {(data.lostFound || []).map((it) => (
+                <article key={it.id} className="reportRow">
+                  <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
+                    {it.photo && <img src={it.photo} alt={it.item || 'found item'} className="lostThumb" />}
+                    <div>
+                      <h3>{it.item || it.description || 'Unnamed item'}</h3>
+                      <p>{it.location} · {it.date}</p>
+                      {it.description && <small>{it.description}</small>}
+                      {it.claim && <div className="muted">Claim by: {it.claim.claimant} · {it.claim.contact}</div>}
+                    </div>
+                  </div>
+                  <div>
+                    <span>{it.status}</span>
+                    {actions && actions.verifyReturn && it.status !== 'Returned' && (
+                      <button className="smallBtn" type="button" onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/lostfound/${it.id}/verify`, { method: 'POST' });
+                          if (res.ok) {
+                            actions.verifyReturn(it.id, userName);
+                            if (window.showToast) window.showToast('Marked returned');
+                          } else {
+                            actions.verifyReturn(it.id, userName);
+                            if (window.showToast) window.showToast('Marked returned (local)');
+                          }
+                        } catch (e) {
+                          actions.verifyReturn(it.id, userName);
+                          if (window.showToast) window.showToast('Marked returned (local)');
+                        }
+                      }}>Verify Return</button>
+                    )}
+                  </div>
+                </article>
+              ))}
+              {!(data.lostFound || []).length && <p className="emptyText">No lost & found items.</p>}
+            </div>
           </>
         );
     }
@@ -561,6 +783,16 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
       <main className="adminContent">
         {renderTabContent()}
       </main>
+
+      <ReportPreview
+        open={previewOpen}
+        title={previewTitle}
+        csv={previewCsv}
+        onClose={() => setPreviewOpen(false)}
+        onDownloadCsv={() => downloadFile(`${previewKey}-${new Date().toISOString().slice(0,10)}.csv`, previewCsv, 'text/csv')}
+        onPrint={() => exportReport(previewKey, 'pdf')}
+        onServerExport={() => serverExportMock(previewKey)}
+      />
 
       <nav className="bottomNav">
         <button className={`navButton ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>

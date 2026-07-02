@@ -9,7 +9,24 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
   }
 
   if (view === 'register') {
-    return <RegisterScreen role={role} setRole={setRole} onBack={() => setView('landing')} onLogin={() => setView('login')} onSubmit={(nextRole) => signIn(nextRole)} />;
+    return (
+      <RegisterScreen
+        role={role}
+        setRole={setRole}
+        onBack={() => setView('landing')}
+        onLogin={() => setView('login')}
+        onSubmit={(account) => {
+          // After successful registration, don't auto-sign-in.
+          // Redirect user to the login view and prefill the role.
+          try {
+            if (account?.role) setRole(account.role);
+          } catch (e) {
+            // ignore
+          }
+          setView('login');
+        }}
+      />
+    );
   }
 
   return (

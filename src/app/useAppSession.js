@@ -50,13 +50,14 @@ function useAppSession() {
     setAuth({ signedIn: false, role: 'Admin', fullName: 'Guest', email: '' });
     setSheet(null);
     setTab('dashboard');
-    setEntryView('landing');
+    setEntryView('login');
   };
 
   return {
     tab,
     setTab,
     auth,
+    setAuth,
     sheet,
     setSheet,
     entryView,

@@ -132,6 +132,28 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
             </section>
           </section>
         );
+      case 'lost':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <h2>Lost & Found</h2>
+              <button className="smallBtn" type="button" onClick={() => openSheet('lost')}>Report Found Item</button>
+            </div>
+            <section className="featureList">
+              {(data.lostFound || []).map((item) => (
+                <article key={item.id} className="reportRow">
+                  <div>
+                    <h3>{item.item || item.description || 'Lost item'}</h3>
+                    <p>{item.location || 'Location unknown'} · {new Date(item.createdAt || item.date || Date.now()).toLocaleDateString()}</p>
+                    {item.foundBy && <small>Found by {item.foundBy}</small>}
+                  </div>
+                  <span>{item.status}</span>
+                </article>
+              ))}
+              {!(data.lostFound || []).length && <p className="emptyText">No lost & found reports yet.</p>}
+            </section>
+          </section>
+        );
       default:
         return (
           <section className="tabPage">
@@ -196,8 +218,14 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
             </section>
 
             <section className="sectionHeader">
+              <h2>Teacher actions</h2>
+              <div className="sectionActions">
+                <button className="smallBtn" type="button" onClick={() => openSheet('event')}>Add Event</button>
+                <button className="smallBtn" type="button" onClick={() => openSheet('lost')}>File Lost Item</button>
+              </div>
+            </section>
+            <section className="sectionHeader">
               <h2>Upcoming school events</h2>
-              <button className="smallBtn" type="button" onClick={() => openSheet('event')}>Add Event</button>
             </section>
             <section className="featureList">
               {upcomingEvents.map((event) => (
@@ -253,6 +281,10 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
         <button className={`navButton ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
           <span className="material-symbols-outlined">event</span>
           <span>Events</span>
+        </button>
+        <button className={`navButton ${activeTab === 'lost' ? 'active' : ''}`} onClick={() => setActiveTab('lost')}>
+          <span className="material-symbols-outlined">inventory_2</span>
+          <span>Lost</span>
         </button>
         <button className={`navButton ${activeTab === 'release' ? 'active' : ''}`} onClick={() => setActiveTab('release')}>
           <span className="material-symbols-outlined">send</span>
@@ -445,19 +477,19 @@ function NurseDashboard({ data = {}, userName = 'Nurse', setSheet }) {
   );
 }
 
-function RoleDashboard({ role, data, stats, userName, setSheet, signOut, actions }) {
+function RoleDashboard({ role, data, stats, userName, auth, setAuth, setSheet, signOut, actions }) {
   switch (role) {
     case 'Teacher':
       return <TeacherDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} actions={actions} />;
     case 'Parent':
-      return <ParentDashboard data={data} userName={userName} setSheet={setSheet} signOut={signOut} />;
+      return <ParentDashboard data={data} userName={userName} auth={auth} setAuth={setAuth} setSheet={setSheet} signOut={signOut} actions={actions} />;
     case 'Guard':
       return <GuardDashboard data={data} userName={userName} setSheet={setSheet} signOut={signOut} />;
     case 'Nurse':
       return <NurseDashboard data={data} userName={userName} setSheet={setSheet} signOut={signOut} />;
     case 'Admin':
     default:
-      return <AdminDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} />;
+      return <AdminDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} actions={actions} />;
   }
 }
 

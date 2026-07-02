@@ -1,9 +1,17 @@
 import React, { useState } from 'react';
+import { clearSessionFromStorage } from '../../app/sessionStorage.js';
 import { CalendarView } from '../../components/CalendarView.jsx';
 
-function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
+function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = () => {}, setSheet, signOut, actions }) {
   const [activeTab, setActiveTab] = useState('home');
+  const [claimOpen, setClaimOpen] = useState(false);
+  const [claimItem, setClaimItem] = useState(null);
+  const [claimContact, setClaimContact] = useState('');
+  const [claimantName, setClaimantName] = useState(userName);
+  const [previewImage, setPreviewImage] = useState(null);
   const [selectedStudentId, setSelectedStudentId] = useState('');
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [profileDraft, setProfileDraft] = useState({ fullName: auth.fullName || userName, email: auth.email || '' });
   const announcements = data.announcements || [];
   const students = data.students || [];
   const currentStudentId = selectedStudentId || students[0]?.id || '';
@@ -74,6 +82,26 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
                 <h3>Parent Overview</h3>
                 <p className="headerPersona">Parent • {userName}</p>
               </div>
+              <div className="headerActions">
+                <button
+                  type="button"
+                  className="logoutBtn"
+                  onClick={() => {
+                      if (typeof signOut === 'function') {
+                        signOut();
+                        return;
+                      }
+                      try {
+                        clearSessionFromStorage(typeof window !== 'undefined' ? window.localStorage : null);
+                      } catch (e) {
+                        // ignore
+                      }
+                      if (typeof window !== 'undefined') window.location.reload();
+                    }}
+                >
+                  Logout
+                </button>
+              </div>
             </section>
 
             {hasMultipleChildren && (
@@ -116,6 +144,13 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
                 <div>
                   <strong>School calendar</strong>
                   <small>Check upcoming events and school days.</small>
+                </div>
+              </button>
+              <button type="button" className="actionCard" onClick={() => setActiveTab('lostFound')}>
+                <span className="material-symbols-outlined">inventory</span>
+                <div>
+                  <strong>Lost & Found</strong>
+                  <small>Browse found items or claim yours.</small>
                 </div>
               </button>
             </section>
@@ -220,6 +255,139 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
             </div>
           </section>
         );
+      case 'lostFound':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <h2>Lost & Found</h2>
+              <p className="sectionNote">Browse items found at school. Claim if it's yours.</p>
+            </div>
+            <div className="featureList">
+              {(data.lostFound || []).map((it) => (
+                <article key={it.id} className="reportRow">
+                  <div style={{display: 'flex', gap: 12, alignItems: 'center'}}>
+                    {it.photo && <img src={it.photo} alt={it.item || 'found item'} className="lostThumb" onClick={() => setPreviewImage(it.photo)} />}
+                    <div>
+                      <h3>{it.item || it.description || 'Unnamed item'}</h3>
+                      <p>{it.location} · {it.date}</p>
+                      {it.description && <small>{it.description}</small>}
+                    </div>
+                  </div>
+                  <div style={{display: 'flex', flexDirection: 'column', gap: 6}}>
+                    <span>{it.status}</span>
+                    {it.status !== 'Returned' && <button className="smallBtn" type="button" onClick={() => { setClaimItem(it); setClaimContact(''); setClaimantName(userName); setClaimOpen(true); }}>Claim</button>}
+                  </div>
+                </article>
+              ))}
+              {!(data.lostFound || []).length && <p className="emptyText">No items found yet.</p>}
+            </div>
+
+            {claimOpen && claimItem && (
+              <div className="overlay" role="dialog">
+                <div className="sheet">
+                  <div className="sheetHead">
+                    <h2>Claim item</h2>
+                    <button className="iconButton" onClick={() => setClaimOpen(false)}>Close</button>
+                  </div>
+                  <div className="sheetBody">
+                    {claimItem.photo && <img src={claimItem.photo} alt="item" style={{maxWidth: '100%', borderRadius: 8, marginBottom: 8}} />}
+                    <p><strong>{claimItem.item || claimItem.description}</strong></p>
+                    <label>
+                      Your name
+                      <input value={claimantName} onChange={(e) => setClaimantName(e.target.value)} />
+                    </label>
+                    <label>
+                      Contact (phone / email)
+                      <input value={claimContact} onChange={(e) => setClaimContact(e.target.value)} placeholder="Phone or email" />
+                    </label>
+                    <div className="actionRow">
+                      <button className="smallBtn" type="button" onClick={async () => {
+                        try {
+                          const res = await fetch(`/api/lostfound/${claimItem.id}/claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ claimant: claimantName, contact: claimContact }) });
+                          if (res.ok) {
+                            if (actions && actions.claimLostItem) actions.claimLostItem(claimItem.id, claimantName, claimContact);
+                            if (window.showToast) window.showToast('Claim submitted');
+                          } else {
+                            if (actions && actions.claimLostItem) actions.claimLostItem(claimItem.id, claimantName, claimContact);
+                            if (window.showToast) window.showToast('Claim submitted (local)');
+                          }
+                        } catch (e) {
+                          if (actions && actions.claimLostItem) actions.claimLostItem(claimItem.id, claimantName, claimContact);
+                          if (window.showToast) window.showToast('Claim submitted (local)');
+                        }
+                        setClaimOpen(false);
+                      }}>Submit claim</button>
+                      <button className="textButton" type="button" onClick={() => setClaimOpen(false)}>Cancel</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {previewImage && (
+              <div className="imagePreviewOverlay" onClick={() => setPreviewImage(null)}>
+                <img src={previewImage} alt="preview" />
+              </div>
+            )}
+          </section>
+        );
+      case 'profile':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <div>
+                <h2>Parent profile</h2>
+                <p className="sectionNote">Manage your account and linked student details.</p>
+              </div>
+              <div className="sectionActions">
+                <button className="smallBtn" type="button" onClick={() => {
+                  if (!isEditingProfile) {
+                    setProfileDraft({ fullName: auth.fullName || userName, email: auth.email || '' });
+                  }
+                  setIsEditingProfile((current) => !current);
+                }}>
+                  {isEditingProfile ? 'Cancel' : 'Edit profile'}
+                </button>
+              </div>
+            </div>
+            {isEditingProfile ? (
+              <section className="profileEditForm">
+                <article className="profileCard">
+                  <div className="profileField">
+                    <label>Full name</label>
+                    <input value={profileDraft.fullName} onChange={(e) => setProfileDraft({ ...profileDraft, fullName: e.target.value })} />
+                  </div>
+                  <div className="profileField">
+                    <label>Email</label>
+                    <input type="email" value={profileDraft.email} onChange={(e) => setProfileDraft({ ...profileDraft, email: e.target.value })} />
+                  </div>
+                  <div className="actionRow">
+                    <button className="smallBtn" type="button" onClick={() => {
+                      setAuth({ ...auth, fullName: profileDraft.fullName, email: profileDraft.email });
+                      setIsEditingProfile(false);
+                    }}>
+                      Save profile
+                    </button>
+                  </div>
+                </article>
+              </section>
+            ) : (
+              <section className="profileSummary">
+                <article className="profileCard">
+                  <div>
+                    <h3>{auth.fullName || userName}</h3>
+                    <p>{selectedStudent.name ? `Parent of ${selectedStudent.name}` : 'No linked student yet'}</p>
+                  </div>
+                  <div>
+                    <p>{auth.email || 'Email not set'}</p>
+                    <p>{data.school?.name ? `School: ${data.school.name}` : 'School not established yet'}</p>
+                    <p>{students.length} linked student{students.length === 1 ? '' : 's'}</p>
+                  </div>
+                </article>
+              </section>
+            )}
+          </section>
+        );
     }
   };
 
@@ -230,6 +398,10 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
         <button className={`navButton ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
           <span className="material-symbols-outlined">home</span>
           <span>Home</span>
+        </button>
+        <button className={`navButton ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+          <span className="material-symbols-outlined">person</span>
+          <span>Profile</span>
         </button>
         <button className={`navButton ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')}>
           <span className="material-symbols-outlined">chat</span>
