@@ -1201,6 +1201,64 @@ progress::-webkit-progress-value {
   gap: 10px;
 }
 
+.landingFormsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landingFormCard {
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 77, 71, 0.12);
+  box-shadow: 0 16px 30px rgba(15, 77, 71, 0.08);
+  overflow: hidden;
+}
+
+.landingFormCard h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: #0f4d47;
+}
+
+.formExampleList,
+.formStatusList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.formExampleList li,
+.formStatusItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #234d42;
+  font-size: 0.95rem;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.statussubmitted {
+  background: #34d399;
+}
+
+.statuspending {
+  background: #fbbf24;
+}
+
+.statusrejected {
+  background: #f87171;
+}
+
 .landingCard {
   position: relative;
   min-height: 126px;
@@ -1287,14 +1345,288 @@ progress::-webkit-progress-value {
   white-space: normal;
 }
 
-.workflowCard.smallCard h3 {
-  margin: 0 0 8px;
-  font-size: 1rem;
-  color: #0f172a;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+.landingFormsGrid,
+.announcementCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
+.landingFormCard,
+.landingAnnouncementCard {
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 77, 71, 0.12);
+  box-shadow: 0 16px 30px rgba(15, 77, 71, 0.08);
+}
+
+.landingFormCard h3,
+.landingAnnouncementCard h3 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  color: #0f4d47;
+}
+
+.formExampleList,
+.formStatusList,
+.announcementExampleList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.formExampleList li,
+.formStatusItem,
+.announcementExampleList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #234d42;
+  font-size: 0.95rem;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.statussubmitted {
+  background: #34d399;
+}
+
+.statuspending {
+  background: #fbbf24;
+}
+
+.statusrejected {
+  background: #f87171;
+}
+
+.announcementSteps {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.announcementStepItem,
+.clinicStepItem,
+.visitorStepItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #f1fbf6;
+  color: #0f4d47;
+}
+
+.stepMarker {
+  min-width: 28px;
+  min-height: 28px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: #0f766e;
+  color: #fff;
+  font-weight: 700;
+}
+
+.visitorCards,
+.clinicCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landingVisitorCard,
+.landingClinicCard {
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 77, 71, 0.12);
+  box-shadow: 0 16px 30px rgba(15, 77, 71, 0.08);
+}
+
+.clinicSteps,
+.visitorSteps {
+  display: grid;
+  gap: 12px;
+}
+
+.clinicRecordList,
+.visitorDetailList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.clinicRecordList li,
+.visitorDetailList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #234d42;
+  font-size: 0.95rem;
+}
+
+.clinicNote {
+  margin-top: 16px;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.pickupCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landingPickupCard {
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 77, 71, 0.12);
+  box-shadow: 0 16px 30px rgba(15, 77, 71, 0.08);
+}
+
+.pickupSteps {
+  display: grid;
+  gap: 12px;
+}
+
+.pickupStepItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #f1fbf6;
+  color: #0f4d47;
+}
+
+.pickupExampleCard {
+  padding: 16px;
+  border-radius: 18px;
+  background: #eff7f0;
+  color: #0f4d47;
+  font-size: 0.95rem;
+  line-height: 1.65;
+}
+
+.attendanceCards,
+.pickupCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landingAttendanceCard,
+.landingPickupCard {
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 77, 71, 0.12);
+  box-shadow: 0 16px 30px rgba(15, 77, 71, 0.08);
+}
+
+.attendanceSteps {
+  display: grid;
+  gap: 12px;
+}
+
+.attendanceStepItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #f1fbf6;
+  color: #0f4d47;
+}
+
+.attendanceNotificationCard {
+  padding: 16px;
+  border-radius: 18px;
+  background: #eff7f0;
+  color: #0f4d47;
+  font-size: 0.95rem;
+  line-height: 1.75;
+  display: grid;
+  gap: 10px;
+}
+
+.announcementAudienceList {
+  display: grid;
+  gap: 10px;
+}
+
+.audienceItem {
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #eef7f1;
+  color: #0f4d47;
+  font-weight: 700;
+}
+
+.clinicCards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.landingClinicCard {
+  padding: 18px;
+  border-radius: 24px;
+  background: #ffffff;
+  border: 1px solid rgba(15, 77, 71, 0.12);
+  box-shadow: 0 16px 30px rgba(15, 77, 71, 0.08);
+}
+
+.clinicSteps {
+  display: grid;
+  gap: 12px;
+}
+
+.clinicStepItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #f1fbf6;
+  color: #0f4d47;
+}
+
+.clinicRecordList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.clinicRecordList li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #234d42;
+  font-size: 0.95rem;
+}
+
+.clinicNote {
+  margin-top: 16px;
+  color: #475569;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
 .workflowCard.smallCard small {
   display: block;
   color: #5a6473;
@@ -1974,24 +2306,24 @@ nav.fixed { height: 74px; }
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
   gap: 0.2rem;
-  padding: 0.3rem 0.45rem calc(0.55rem + env(safe-area-inset-bottom));
+  padding: 0.2rem 0.35rem calc(0.45rem + env(safe-area-inset-bottom));
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   border-top: 1px solid rgba(216, 222, 231, 0.85);
-  box-shadow: 0 -10px 35px rgba(15, 31, 30, 0.08);
+  box-shadow: 0 -8px 28px rgba(15, 31, 30, 0.08);
 }
 
 .navButton {
   border: 0;
   border-radius: 16px;
-  padding: 0.38rem 0.3rem;
+  padding: 0.28rem 0.25rem;
   display: grid;
   place-items: center;
   gap: 0.1rem;
   background: transparent;
   color: #4f6364;
-  font-size: 0.68rem;
-  min-height: 54px;
+  font-size: 0.66rem;
+  min-height: 48px;
   transition: background 150ms ease, transform 150ms ease, color 150ms ease;
 }
 
@@ -2099,6 +2431,94 @@ nav.fixed { height: 74px; }
 .statusPill.absent { background: #fee2e2; color: #991b1b; }
 .statusPill.late { background: #fef3c7; color: #92400e; }
 .statusPill.excused { background: #e0f2fe; color: #0369a1; }
+.statusPill.pending { background: #eff6ff; color: #1d4ed8; }
+
+.attendanceTab {
+  gap: 1.1rem;
+}
+
+.attendanceHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0.5rem 0.5rem;
+}
+
+.attendanceHeading h2 {
+  margin: 0.25rem 0 0;
+  font-size: 1.2rem;
+}
+
+.attendanceHeading .sectionIntro {
+  margin: 0.5rem 0 0;
+  max-width: 42rem;
+  color: #37564b;
+}
+
+.primaryBtn {
+  background: #0f766e;
+  color: #ffffff;
+}
+
+.primaryBtn:hover {
+  background: #115e59;
+}
+
+.attendanceMetrics .summaryCard {
+  min-height: 116px;
+  padding: 1rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.attendanceMetrics .summaryCard h3 {
+  margin: 0;
+  color: #0f766e;
+  font-size: 0.82rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.attendanceMetrics .summaryCard p {
+  margin: 0;
+  font-size: 2rem;
+  color: #115e59;
+  font-weight: 800;
+}
+
+.attendanceCard {
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid #dbe5e1;
+  background: #ffffff;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.attendanceCardHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.attendanceCardHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.attendanceCardHeader p {
+  margin: 0.35rem 0 0;
+  color: #5a6473;
+  font-size: 0.88rem;
+}
+
+.attendanceCardHeader .badge {
+  background: #ecfdf5;
+  color: #115e59;
+}
 
 .reportRow {
   display: flex;
@@ -2418,18 +2838,20 @@ nav.fixed { height: 74px; }
 
 .actionCard {
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
 }
 
 .actionCard:hover {
   transform: translateY(-1px);
   box-shadow: 0 14px 30px rgba(28, 47, 43, 0.08);
+  border-color: #cfe8e2;
 }
 
 .actionCard span.material-symbols-outlined,
 .passiveCard span.material-symbols-outlined {
-  font-size: 1.5rem;
+  font-size: 1.6rem;
   color: #0f766e;
+  min-width: 38px;
 }
 
 .actionCard div,
@@ -2438,10 +2860,87 @@ nav.fixed { height: 74px; }
   gap: 0.25rem;
 }
 
+.actionCard strong,
+.actionCard small {
+  display: block;
+}
+
+.actionCard strong {
+  font-size: 0.95rem;
+  color: #102a31;
+}
+
+.actionCard small {
+  color: #4f6364;
+  font-size: 0.84rem;
+}
+
 .sectionNote {
   margin: 0.35rem 0 0;
   color: #52645e;
   font-size: 0.9rem;
+}
+
+.guardianPreview {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.guardianCard {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem;
+  border-radius: 1rem;
+  border: 1px solid #dbe5e1;
+  background: #ffffff;
+  box-shadow: 0 10px 24px rgba(28, 47, 43, 0.05);
+}
+
+.guardianAvatar {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  background: #ecfdf5;
+  display: grid;
+  place-items: center;
+  color: #115e59;
+  font-weight: 900;
+  font-size: 1rem;
+  overflow: hidden;
+}
+
+.guardianAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.guardianDetails {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.guardianDetails h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.guardianDetails p,
+.guardianDetails small {
+  margin: 0;
+  color: #52645e;
+  font-size: 0.84rem;
+}
+
+.guardianCard .statusPill {
+  padding: 0.45rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 @media (max-width: 768px) {
@@ -3091,6 +3590,20 @@ nav.fixed { height: 74px; }
   background: #f8faf8;
   color: #17211f;
   outline: 0;
+}
+
+.field input[type="file"] {
+  padding: 8px 10px;
+  background: #fff;
+}
+
+.formImagePreview {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid #dbe5e1;
+  margin-top: 0.4rem;
 }
 
 .field textarea {

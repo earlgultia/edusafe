@@ -50,7 +50,9 @@ function GuardianQrSheet({ close, data }) {
             return (
               <article className="qrCard" key={guardian.id}>
                 <div className="qrImageWrap">
-                  {qrImages[guardian.id] ? (
+                  {guardian.photo ? (
+                    <img src={guardian.photo} alt={`${guardian.name}`} className="qrImage" />
+                  ) : qrImages[guardian.id] ? (
                     <img src={qrImages[guardian.id]} alt={`${guardian.name} QR`} className="qrImage" />
                   ) : (
                     <div className="qrBadge">
@@ -61,6 +63,8 @@ function GuardianQrSheet({ close, data }) {
                 <div>
                   <h3>{guardian.name}</h3>
                   <p>{guardian.relation} for {student?.name || 'your child'}</p>
+                  {guardian.validId && <small>ID: {guardian.validId}</small>}
+                  {guardian.emergencyContact && <small>Emergency: {guardian.emergencyContact}</small>}
                   <small>{guardian.qr}</small>
                 </div>
                 <button className="smallBtn" type="button" onClick={() => copyCode(guardian.qr)}>

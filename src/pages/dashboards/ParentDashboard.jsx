@@ -125,6 +125,13 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                   <small>Share permission slips or approvals.</small>
                 </div>
               </button>
+              <button type="button" className="actionCard" onClick={() => openSheet('guardian')}>
+                <span className="material-symbols-outlined">person_add_alt</span>
+                <div>
+                  <strong>Add trusted adult</strong>
+                  <small>Register a guardian and generate a QR pass.</small>
+                </div>
+              </button>
               <button type="button" className="actionCard" onClick={() => openSheet('guardian_qr')}>
                 <span className="material-symbols-outlined">qr_code</span>
                 <div>
@@ -177,6 +184,32 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                 <p>{pendingForms} pending</p>
               </article>
             </section>
+
+            <section className="sectionHeader">
+              <div>
+                <h2>Trusted adults</h2>
+                <p className="sectionNote">Add parents, grandparents, caregivers, and school service drivers with QR pickup access.</p>
+              </div>
+              <button className="smallBtn" type="button" onClick={() => openSheet('guardian')}>Add trusted adult</button>
+            </section>
+            <div className="guardianPreview">
+              {(childGuardians || []).slice(0, 3).map((guardian) => (
+                <article key={guardian.id} className="guardianCard">
+                  <div className="guardianAvatar">
+                    {guardian.photo ? <img src={guardian.photo} alt={guardian.name} /> : <span>{guardian.name?.slice(0, 2)}</span>}
+                  </div>
+                  <div className="guardianDetails">
+                    <h3>{guardian.name || 'Trusted adult'}</h3>
+                    <p>{guardian.relation || 'Relationship not set'}</p>
+                    <small>{guardian.phone || 'No phone provided'}</small>
+                  </div>
+                  <span className={`statusPill ${guardian.verified ? 'present' : 'pending'}`}>
+                    {guardian.verified ? 'Verified' : 'Pending'}
+                  </span>
+                </article>
+              ))}
+              {!childGuardians.length && <p className="emptyText">No trusted adults registered yet.</p>}
+            </div>
 
             <section className="sectionHeader">
               <h2>Attendance calendar</h2>

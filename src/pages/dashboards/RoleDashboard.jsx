@@ -4,7 +4,7 @@ import { ParentDashboard } from './ParentDashboard.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 
 function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setSheet, actions, signOut }) {
-  const [activeTab, setActiveTab] = useState('home');
+  const [activeTab, setActiveTab] = useState('attendance');
   const students = data.students || [];
   const announcements = data.announcements || [];
   const incidents = data.incidents || [];
@@ -32,8 +32,68 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
 
   const openSheet = (sheet) => setSheet?.(sheet);
 
+  const attendanceStatusClass = (status) => {
+    switch (status) {
+      case 'Present': return 'statusPill present';
+      case 'Absent': return 'statusPill absent';
+      case 'Late': return 'statusPill late';
+      case 'Excused': return 'statusPill excused';
+      default: return 'statusPill pending';
+    }
+  };
+
   const renderContent = () => {
     switch (activeTab) {
+      case 'attendance':
+        return (
+          <section className="tabPage attendanceTab">
+            <div className="attendanceHeading">
+              <div>
+                <span className="sectionSubtitle">Daily roll</span>
+                <h2>Attendance</h2>
+                <p className="sectionIntro">Tap Mark Attendance to start today’s roll and update parents instantly.</p>
+              </div>
+              <button className="smallBtn primaryBtn" type="button" onClick={() => openSheet('attendance')}>Mark Attendance</button>
+            </div>
+            <section className="metricGrid attendanceMetrics">
+              <article className="summaryCard presentCard">
+                <h3>Present</h3>
+                <p>{present}</p>
+              </article>
+              <article className="summaryCard">
+                <h3>Absent</h3>
+                <p>{absent}</p>
+              </article>
+              <article className="summaryCard">
+                <h3>Late</h3>
+                <p>{late}</p>
+              </article>
+              <article className="summaryCard">
+                <h3>Not marked</h3>
+                <p>{Math.max(totalStudents - (present + absent + late), 0)}</p>
+              </article>
+            </section>
+            <section className="attendanceCard">
+              <div className="attendanceCardHeader">
+                <div>
+                  <h3>Student attendance preview</h3>
+                  <p>Review the first six students and tap Mark Attendance to update each one.</p>
+                </div>
+                <span className="badge">{totalStudents} students</span>
+              </div>
+              {(students || []).slice(0, 6).map((student) => (
+                <article key={student.id} className="reportRow">
+                  <div>
+                    <h3>{student.name}</h3>
+                    <p>{student.grade || 'Student'} · {student.section || 'Section'}</p>
+                  </div>
+                  <span className={attendanceStatusClass(student.status)}>{student.status || 'Pending'}</span>
+                </article>
+              ))}
+              {!students.length && <p className="emptyText">No students available for attendance.</p>}
+            </section>
+          </section>
+        );
       case 'people':
         return (
           <section className="tabPage">
@@ -220,6 +280,7 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
             <section className="sectionHeader">
               <h2>Teacher actions</h2>
               <div className="sectionActions">
+                <button className="smallBtn" type="button" onClick={() => openSheet('attendance')}>Mark Attendance</button>
                 <button className="smallBtn" type="button" onClick={() => openSheet('event')}>Add Event</button>
                 <button className="smallBtn" type="button" onClick={() => openSheet('lost')}>File Lost Item</button>
               </div>
@@ -273,6 +334,10 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
         <button className={`navButton ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
           <span className="material-symbols-outlined">home</span>
           <span>Home</span>
+        </button>
+        <button className={`navButton ${activeTab === 'attendance' ? 'active' : ''}`} onClick={() => setActiveTab('attendance')}>
+          <span className="material-symbols-outlined">check_circle</span>
+          <span>Attendance</span>
         </button>
         <button className={`navButton ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
           <span className="material-symbols-outlined">people</span>

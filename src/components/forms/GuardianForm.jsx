@@ -9,8 +9,23 @@ function GuardianForm({ close, actions, data }) {
     relation: 'Mother',
     phone: '',
     studentId: studentOptions[0]?.split(':')[0] ?? '',
-    verified: true
+    verified: true,
+    photo: '',
+    validId: '',
+    emergencyContact: ''
   });
+
+  const handlePhotoChange = (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      setForm({ ...form, photo: '' });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => setForm({ ...form, photo: reader.result || '' });
+    reader.readAsDataURL(file);
+  };
 
   return (
     <FormShell
@@ -23,8 +38,21 @@ function GuardianForm({ close, actions, data }) {
       submitDisabled={!hasStudents}
     >
       <Field label="Guardian name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
-      <Select label="Relationship" value={form.relation} options={['Mother', 'Father', 'Guardian', 'Grandparent', 'Sibling', 'Driver', 'Other']} onChange={(relation) => setForm({ ...form, relation })} />
+      <label className="field">
+        <span>Photo</span>
+        <input type="file" accept="image/*" onChange={handlePhotoChange} />
+        {form.photo && <img src={form.photo} alt="Guardian preview" className="formImagePreview" />}
+        <small className="fieldNote">Optional photo for pickup verification.</small>
+      </label>
+      <Select
+        label="Relationship"
+        value={form.relation}
+        options={['Mother', 'Father', 'Grandfather', 'Grandmother', 'Aunt', 'Uncle', 'School Service Driver', 'Other']}
+        onChange={(relation) => setForm({ ...form, relation })}
+      />
       <Field label="Phone" value={form.phone} onChange={(phone) => setForm({ ...form, phone })} />
+      <Field label="Valid ID (optional)" value={form.validId} onChange={(validId) => setForm({ ...form, validId })} />
+      <Field label="Emergency contact" value={form.emergencyContact} onChange={(emergencyContact) => setForm({ ...form, emergencyContact })} />
       <Select
         label="Student"
         value={form.studentId}

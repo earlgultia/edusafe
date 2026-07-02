@@ -92,21 +92,6 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
           </div>
         </section>
 
-        <section className="landingSection landingPreview">
-          <div className="sectionTitleBlock">
-            <span>Fast workflows</span>
-            <h2>Start in seconds with role-based screens built for daily use.</h2>
-          </div>
-          <div className="workflowList compact">
-            {mvpScreens.slice(0, 4).map((screen) => (
-              <article key={screen.title} className="workflowCard smallCard">
-                <h3>{screen.title}</h3>
-                <small>{screen.role}</small>
-              </article>
-            ))}
-          </div>
-        </section>
-
         <section className="authCard authPanel">
           <div className="authCardHead">
             <div>

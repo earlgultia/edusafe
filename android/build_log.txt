@@ -1,0 +1,94 @@
+> Task :app:clean
+
+> Task :app:buildWebApp
+
+> edusafe-ph-mobile@1.0.0 build
+> vite build
+
+[36mvite v8.1.2 [32mbuilding client environment for production...[36m[39m
+[2Ktransforming...✓ 168 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/assets/polyfills-legacy-BE_hmpz8.js  161.13 kB │ gzip:  57.92 kB
+dist/assets/index-legacy-DM4t5dRB.js      674.69 kB │ gzip: 162.94 kB
+
+[33m[33m[PLUGIN_TIMINGS] [0mYour build spent significant time in plugins. Here is a breakdown:
+  - vite:legacy-post-process (54%)
+  - vite:terser (29%)
+  - vite:legacy-generate-polyfill-chunk (12%)
+See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+[39m
+[33m[plugin builtin:vite-reporter] 
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rolldownOptions.output.codeSplitting to improve chunking: https://rolldown.rs/reference/OutputOptions.codeSplitting
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.[39m
+[2Ktransforming...✓ 168 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   2.20 kB │ gzip:   1.01 kB
+dist/assets/index-2bP4Wcyg.css   50.98 kB │ gzip:  11.10 kB
+dist/assets/index-C_ShqSlU.js   493.60 kB │ gzip: 132.24 kB
+
+[32m✓ built in 17.21s[39m
+
+> Task :app:copyWebApp UP-TO-DATE
+> Task :app:ensureMdpiLauncher
+> Task :app:removeStrayResourceTxtFiles UP-TO-DATE
+> Task :app:preBuild
+> Task :app:preReleaseBuild
+> Task :app:javaPreCompileRelease
+> Task :app:checkReleaseAarMetadata
+> Task :app:generateReleaseResValues
+> Task :app:mapReleaseSourceSetPaths
+> Task :app:generateReleaseResources
+> Task :app:packageReleaseResources
+> Task :app:createReleaseCompatibleScreenManifests
+> Task :app:extractDeepLinksRelease
+> Task :app:mergeReleaseResources
+> Task :app:parseReleaseLocalResources
+> Task :app:processReleaseMainManifest
+> Task :app:processReleaseManifest
+> Task :app:extractProguardFiles
+> Task :app:mergeReleaseJniLibFolders
+> Task :app:mergeReleaseNativeLibs NO-SOURCE
+> Task :app:stripReleaseDebugSymbols NO-SOURCE
+> Task :app:extractReleaseNativeSymbolTables NO-SOURCE
+> Task :app:mergeReleaseNativeDebugMetadata NO-SOURCE
+> Task :app:checkReleaseDuplicateClasses
+> Task :app:desugarReleaseFileDependencies
+> Task :app:mergeExtDexRelease
+> Task :app:mergeReleaseArtProfile UP-TO-DATE
+> Task :app:mergeReleaseShaders
+> Task :app:compileReleaseShaders NO-SOURCE
+> Task :app:generateReleaseAssets UP-TO-DATE
+> Task :app:mergeReleaseAssets
+> Task :app:processReleaseJavaRes NO-SOURCE
+> Task :app:collectReleaseDependencies
+> Task :app:sdkReleaseDependencyData
+> Task :app:writeReleaseAppMetadata
+> Task :app:writeReleaseSigningConfigVersions
+> Task :app:mergeReleaseJavaResource
+> Task :app:processReleaseManifestForPackage
+> Task :app:compressReleaseAssets
+> Task :app:processReleaseResources
+
+> Task :app:compileReleaseJavaWithJavac
+Note: C:\Users\cherr\Desktop\edusafe\android\app\src\main\java\com\edusafe\mobile\MainActivity.java uses or overrides a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+
+> Task :app:generateReleaseLintVitalReportModel
+> Task :app:dexBuilderRelease
+> Task :app:mergeReleaseGlobalSynthetics
+> Task :app:mergeDexRelease
+> Task :app:compileReleaseArtProfile UP-TO-DATE
+> Task :app:optimizeReleaseResources
+> Task :app:packageRelease
+> Task :app:createReleaseApkListingFileRedirect
+> Task :app:lintVitalAnalyzeRelease
+> Task :app:lintVitalReportRelease
+> Task :app:lintVitalRelease
+> Task :app:assembleRelease
+
+BUILD SUCCESSFUL in 25s
+44 actionable tasks: 40 executed, 4 up-to-date

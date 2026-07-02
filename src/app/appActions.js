@@ -4,7 +4,14 @@ function createAppActions(setData) {
     markNotificationRead: (id) => setData((d) => ({ ...d, notifications: (d.notifications || []).map((n) => (n.id === id ? { ...n, read: true } : n)) })),
     addStudent: (student) => setData((d) => ({ ...d, students: [{ id: Date.now(), ...student, release: 'Waiting' }, ...(d.students || [])] })),
     addTeacher: (teacher) => setData((d) => ({ ...d, teachers: [{ id: Date.now(), ...teacher }, ...(d.teachers || [])] })),
-    addGuardian: (guardian) => setData((d) => ({ ...d, guardians: [{ id: Date.now(), qr: `GDN-${guardian.name.split(' ')[0].toUpperCase()}-${guardian.studentId}`, ...guardian }, ...(d.guardians || [])] })),
+    addGuardian: (guardian) => setData((d) => ({
+      ...d,
+      guardians: [{
+        id: Date.now(),
+        qr: `GDN-${guardian.name.split(' ')[0].toUpperCase()}-${guardian.studentId}-${Date.now()}`,
+        ...guardian
+      }, ...(d.guardians || [])]
+    })),
     updateSchool: (school) => setData((d) => ({ ...d, school: { ...d.school, ...school } })),
     markAttendance: (id, status) => setData((d) => ({
       ...d,
