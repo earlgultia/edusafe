@@ -386,19 +386,31 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
 
             <section className="overviewRow">
               <article className="overviewCard">
-                <p className="overviewLabel">Visitors on campus</p>
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">groups</span>
+                  <p className="overviewLabel">Visitors on campus</p>
+                </div>
                 <p className="overviewValue">{visitors}</p>
               </article>
               <article className="overviewCard">
-                <p className="overviewLabel">Pending forms</p>
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">article</span>
+                  <p className="overviewLabel">Pending forms</p>
+                </div>
                 <p className="overviewValue">{pendingForms}</p>
               </article>
               <article className="overviewCard">
-                <p className="overviewLabel">Pickup queue</p>
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">access_time</span>
+                  <p className="overviewLabel">Pickup queue</p>
+                </div>
                 <p className="overviewValue">{pendingPickups}</p>
               </article>
               <article className="overviewCard">
-                <p className="overviewLabel">Active teachers</p>
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">emoji_people</span>
+                  <p className="overviewLabel">Active teachers</p>
+                </div>
                 <p className="overviewValue">{teachers}</p>
               </article>
             </section>

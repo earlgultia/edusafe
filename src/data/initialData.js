@@ -11,6 +11,7 @@ const initialData = {
   attendanceLog: [],
   pickupLog: [],
   forms: [],
+  events: [],
   lostFound: [],
   emergency: []
 };

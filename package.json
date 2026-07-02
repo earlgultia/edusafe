@@ -3,12 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "scripts": {
-    "start": "vite --host 0.0.0.0",
-    "dev": "vite --host 0.0.0.0",
-    "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0"
-  },
+
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
     "@vitejs/plugin-legacy": "latest",
@@ -18,5 +13,31 @@
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"
+  }
+  ,
+  "devDependencies": {
+    "vitest": "^1.0.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.0.0",
+    "jsdom": "^22.0.0"
+  },
+  "devDependenciesMeta": {
+    "@playwright/test": {
+      "optional": true
+    }
+  },
+  "scripts": {
+    "start": "vite --host 0.0.0.0",
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test:e2e": "playwright test",
+    "test": "vitest"
+  },
+  "vitest": {
+    "test": {
+      "environment": "jsdom",
+      "globals": true
+    }
   }
 }

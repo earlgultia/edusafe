@@ -43,6 +43,7 @@ function createAppActions(setData) {
     addIncident: (incident) => setData((d) => ({ ...d, incidents: [{ id: Date.now(), status: 'Submitted', ...incident }, ...(d.incidents || [])] })),
     addClinic: (record) => setData((d) => ({ ...d, clinic: [{ id: Date.now(), ...record }, ...(d.clinic || [])] })),
     addAnnouncement: (announcement) => setData((d) => ({ ...d, announcements: [{ id: Date.now(), ...announcement }, ...(d.announcements || [])] })),
+    addEvent: (event) => setData((d) => ({ ...d, events: [{ id: Date.now(), ...event }, ...(d.events || [])] })),
     triggerEmergency: (type) => setData((d) => ({
       ...d,
       emergency: [{ id: Date.now(), type, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.emergency || [])],

@@ -1,14 +1,22 @@
 import React, { useState } from 'react';
+import { CalendarView } from '../../components/CalendarView.jsx';
 
 function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
   const [activeTab, setActiveTab] = useState('home');
+  const [selectedStudentId, setSelectedStudentId] = useState('');
   const announcements = data.announcements || [];
   const students = data.students || [];
-  const student = students[0] || {};
+  const currentStudentId = selectedStudentId || students[0]?.id || '';
+  const selectedStudent = students.find((child) => child.id === currentStudentId) || {};
   const guardians = data.guardians || [];
-  const childGuardians = guardians.filter((guardian) => guardian.studentId === student.id);
+  const childGuardians = guardians.filter((guardian) => guardian.studentId === selectedStudent.id);
   const attendanceLog = data.attendanceLog || [];
-  const studentAttendance = attendanceLog.filter((entry) => entry.studentId === student.id);
+  const studentAttendance = attendanceLog.filter((entry) => entry.studentId === selectedStudent.id);
+  const pickupHistory = (data.pickupLog || []).filter((entry) => entry.studentId === selectedStudent.id);
+  const clinicVisits = (data.clinic || []).filter((entry) => entry.studentId === selectedStudent.id || entry.student === selectedStudent.name);
+  const incidentReports = (data.incidents || []).filter((entry) => entry.studentId === selectedStudent.id || entry.student === selectedStudent.name);
+  const emergencyAlerts = data.emergency || [];
+  const calendarEvents = data.events || [];
   const present = studentAttendance.filter((entry) => entry.status === 'Present').length;
   const absent = studentAttendance.filter((entry) => entry.status === 'Absent').length;
   const late = studentAttendance.filter((entry) => entry.status === 'Late').length;
@@ -16,6 +24,8 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
   const attendanceSummary = studentAttendance.length
     ? `${present} present · ${absent} absent · ${late} late · ${excused} excused`
     : 'Attendance data not available yet';
+  const pendingForms = data.forms ? data.forms.reduce((sum, form) => sum + Math.max(form.total - form.submitted, 0), 0) : 0;
+  const hasMultipleChildren = students.length > 1;
   const openSheet = (sheet) => setSheet?.(sheet);
   const dateLabel = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
@@ -46,6 +56,15 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
             </div>
           </section>
         );
+      case 'calendar':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <h2>School calendar</h2>
+            </div>
+            <CalendarView events={calendarEvents} />
+          </section>
+        );
       default:
         return (
           <section className="tabPage">
@@ -56,6 +75,19 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
                 <p className="headerPersona">Parent • {userName}</p>
               </div>
             </section>
+
+            {hasMultipleChildren && (
+              <section className="sectionHeader">
+                <div>
+                  <p className="sectionLabel">Switch child profile</p>
+                  <select className="childSelect" value={currentStudentId} onChange={(event) => setSelectedStudentId(event.target.value)}>
+                    {students.map((child) => (
+                      <option key={child.id} value={child.id}>{child.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </section>
+            )}
 
             <section className="actionGrid parentActions">
               <button type="button" className="actionCard" onClick={() => openSheet('form')}>
@@ -68,78 +100,123 @@ function ParentDashboard({ data = {}, userName = 'Parent', setSheet }) {
               <button type="button" className="actionCard" onClick={() => openSheet('guardian_qr')}>
                 <span className="material-symbols-outlined">qr_code</span>
                 <div>
-                  <strong>Generate Guardian QR</strong>
-                  <small>Create or share a verified guardian pass.</small>
+                  <strong>Guardian passes</strong>
+                  <small>View or share verified guardian QR passes.</small>
                 </div>
               </button>
-              <div className="actionCard passiveCard">
-                <span className="material-symbols-outlined">school</span>
+              <button type="button" className="actionCard" onClick={() => setActiveTab('messages')}>
+                <span className="material-symbols-outlined">announcement</span>
                 <div>
-                  <strong>Monitor attendance</strong>
-                  <small>See your child’s attendance summary.</small>
+                  <strong>School announcements</strong>
+                  <small>See the latest notices and alerts.</small>
                 </div>
-              </div>
-              <div className="actionCard passiveCard">
-                <span className="material-symbols-outlined">notifications</span>
+              </button>
+                <button type="button" className="actionCard" onClick={() => setActiveTab('calendar')}>
+                <span className="material-symbols-outlined">calendar_month</span>
                 <div>
-                  <strong>Receive notifications</strong>
-                  <small>Stay updated with school alerts.</small>
+                  <strong>School calendar</strong>
+                  <small>Check upcoming events and school days.</small>
                 </div>
-              </div>
+              </button>
             </section>
 
             <section className="metricGrid">
               <article className="featureCard">
-                <h3>Your child</h3>
-                <p>{student.name || 'Student profile not linked'}</p>
+                <h3>{selectedStudent.name || 'Linked child'}</h3>
+                <p>{studentAttendance.length ? `${studentAttendance.length} attendance records` : 'No attendance recorded yet'}</p>
               </article>
               <article className="featureCard">
-                <h3>Attendance</h3>
-                <p>{attendanceSummary}</p>
+                <h3>Pickup history</h3>
+                <p>{pickupHistory.length} record(s)</p>
               </article>
               <article className="featureCard">
-                <h3>Guardian QR</h3>
-                <p>{childGuardians.length} linked guardian(s)</p>
+                <h3>Clinic visits</h3>
+                <p>{clinicVisits.length} logged</p>
               </article>
               <article className="featureCard">
-                <h3>Notifications</h3>
-                <p>{announcements.length} recent update(s)</p>
+                <h3>Incident reports</h3>
+                <p>{incidentReports.length} item(s)</p>
+              </article>
+              <article className="featureCard">
+                <h3>Digital forms</h3>
+                <p>{pendingForms} pending</p>
               </article>
             </section>
 
             <section className="sectionHeader">
-              <h2>Latest updates</h2>
-              <button className="smallBtn" type="button" onClick={() => setActiveTab('messages')}>View all</button>
+              <h2>Attendance calendar</h2>
+              <button className="smallBtn" type="button" onClick={() => setActiveTab('calendar')}>View calendar</button>
             </section>
-            <div className="featureList">
-              {announcements.slice(0, 2).map((item) => (
-                <article key={item.id} className="reportRow">
+            <div className="timeline">
+              {studentAttendance.slice(-4).map((entry) => (
+                <article key={entry.id || `${entry.date}-${entry.status}`} className="row">
                   <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.body}</p>
+                    <h3>{entry.date || 'Date unknown'}</h3>
+                    <p>{entry.status}</p>
                   </div>
-                  <span>{item.audience}</span>
+                  <span className="status">{entry.status}</span>
                 </article>
               ))}
-              {!announcements.length && <p className="emptyText">No latest updates yet.</p>}
+              {!studentAttendance.length && <p className="emptyText">No attendance entries for this child yet.</p>}
             </div>
 
             <section className="sectionHeader">
-              <h2>Guardian passes</h2>
+              <h2>Pickup history</h2>
               <button className="smallBtn" type="button" onClick={() => openSheet('guardian')}>Manage guardians</button>
             </section>
             <div className="featureList">
-              {childGuardians.map((guardian) => (
-                <article key={guardian.id} className="reportRow">
+              {pickupHistory.slice(0, 4).map((entry) => (
+                <article key={entry.id} className="reportRow">
                   <div>
-                    <h3>{guardian.name}</h3>
-                    <p>{guardian.relation}</p>
-                    <small>{guardian.qr}</small>
+                    <h3>{entry.student || selectedStudent.name}</h3>
+                    <p>{entry.date || 'Today'} · {entry.status}</p>
                   </div>
-                  <span>{guardian.verified ? 'Verified' : 'Pending'}</span>
+                  <span>{entry.time || ''}</span>
                 </article>
               ))}
-              {!childGuardians.length && <p className="emptyText">No guardian QR passes available.</p>}
+              {!pickupHistory.length && <p className="emptyText">No pickup history yet.</p>}
+            </div>
+
+            <section className="sectionHeader">
+              <h2>Health & incident reports</h2>
+              <button className="smallBtn" type="button" onClick={() => openSheet('clinic')}>New clinic report</button>
+            </section>
+            <div className="featureList">
+              {clinicVisits.slice(0, 2).map((visit) => (
+                <article key={visit.id} className="reportRow">
+                  <div>
+                    <h3>{visit.reason}</h3>
+                    <p>{visit.date || visit.time || 'Clinic visit'}</p>
+                  </div>
+                  <span>{visit.temp || 'Details'}</span>
+                </article>
+              ))}
+              {incidentReports.slice(0, 2).map((incident) => (
+                <article key={incident.id} className="reportRow">
+                  <div>
+                    <h3>{incident.type}</h3>
+                    <p>{incident.description}</p>
+                  </div>
+                  <span>{incident.status || 'Reported'}</span>
+                </article>
+              ))}
+              {!clinicVisits.length && !incidentReports.length && <p className="emptyText">No clinic or incident reports for this child.</p>}
+            </div>
+
+            <section className="sectionHeader">
+              <h2>Emergency alerts</h2>
+            </section>
+            <div className="featureList">
+              {emergencyAlerts.slice(0, 3).map((alert) => (
+                <article key={alert.id} className="reportRow">
+                  <div>
+                    <h3>{alert.type}</h3>
+                    <p>{alert.time}</p>
+                  </div>
+                  <span>Alert</span>
+                </article>
+              ))}
+              {!emergencyAlerts.length && <p className="emptyText">No emergency alerts.</p>}
             </div>
           </section>
         );

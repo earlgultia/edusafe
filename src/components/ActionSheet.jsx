@@ -13,6 +13,7 @@ import { IncidentForm } from './forms/IncidentForm.jsx';
 import { ClinicForm } from './forms/ClinicForm.jsx';
 import { AnnouncementForm } from './forms/AnnouncementForm.jsx';
 import { EmergencyForm } from './forms/EmergencyForm.jsx';
+import { EventForm } from './forms/EventForm.jsx';
 import { ReleaseForm } from './forms/ReleaseForm.jsx';
 import { BasicForm } from './forms/BasicForm.jsx';
 import { GuardianQrSheet } from './forms/GuardianQrSheet.jsx';
@@ -26,6 +27,7 @@ function ActionSheet({ sheet, close, data, actions }) {
       school: 'School Setup',
     clinic: 'Clinic Record',
     announcement: 'Publish Announcement',
+    event: 'Create School Event',
     emergency: 'Emergency Alert',
     release: 'Guardian Verification',
     form: 'Create Digital Form',
@@ -48,6 +50,7 @@ function ActionSheet({ sheet, close, data, actions }) {
         {sheet === 'incident' && <IncidentForm close={close} actions={actions} data={data} />}
         {sheet === 'clinic' && <ClinicForm close={close} actions={actions} data={data} />}
         {sheet === 'announcement' && <AnnouncementForm close={close} actions={actions} />}
+        {sheet === 'event' && <EventForm close={close} actions={actions} />}
         {sheet === 'emergency' && <EmergencyForm close={close} actions={actions} />}
         {sheet === 'release' && <ReleaseForm close={close} actions={actions} data={data} />}
         {sheet === 'teacher' && <TeacherForm close={close} actions={actions} />}

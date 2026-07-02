@@ -8,10 +8,17 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
   const students = data.students || [];
   const announcements = data.announcements || [];
   const incidents = data.incidents || [];
+  const forms = data.forms || [];
+  const events = data.events || [];
   const totalStudents = students.length;
   const present = students.filter((student) => student.status === 'Present').length;
   const absent = students.filter((student) => student.status === 'Absent').length;
   const late = students.filter((student) => student.status === 'Late').length;
+  const notReleased = students.filter((student) => student.release === 'Waiting').length;
+  const pendingForms = stats.pendingForms ?? forms.reduce((sum, form) => sum + Math.max(form.total - form.submitted, 0), 0);
+  const clinicReferrals = (data.clinic || []).length;
+  const incidentCount = incidents.length;
+  const upcomingEvents = events.slice(0, 3);
   const verifiedGuardians = (data.guardians || []).filter((guardian) => guardian.verified).length;
   const recentStudents = students.slice(0, 3);
   const guardianQueue = (data.guardians || []).slice(0, 3);
@@ -56,6 +63,29 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
               ))}
               {!announcements.length && <p className="emptyText">No announcements yet.</p>}
             </div>
+          </section>
+        );
+      case 'events':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <h2>School events</h2>
+              <button className="smallBtn" type="button" onClick={() => openSheet('event')}>Add Event</button>
+            </div>
+            <div className="featureList">
+              {events.map((event) => (
+                <article key={event.id} className="reportRow">
+                  <div>
+                    <h3>{event.title}</h3>
+                    <p>{event.date} · {event.location || 'Campus'}</p>
+                    {event.details && <small>{event.details}</small>}
+                  </div>
+                  <span>{event.location || 'Campus'}</span>
+                </article>
+              ))}
+              {!events.length && <p className="emptyText">No events scheduled yet.</p>}
+            </div>
+            <button className="smallBtn" type="button" onClick={() => setActiveTab('home')}>Back to dashboard</button>
           </section>
         );
       case 'release':
@@ -114,90 +144,77 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
                 <span className="material-symbols-outlined">logout</span>
               </button>
             </section>
+
+            <section className="overviewRow">
+              <article className="overviewCard">
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">task_alt</span>
+                  <p className="overviewLabel">Today's attendance</p>
+                </div>
+                <p className="overviewValue">{present + absent + late}</p>
+              </article>
+              <article className="overviewCard">
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">person_off</span>
+                  <p className="overviewLabel">Absent students</p>
+                </div>
+                <p className="overviewValue">{absent}</p>
+              </article>
+              <article className="overviewCard">
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">inventory_2</span>
+                  <p className="overviewLabel">Not yet released</p>
+                </div>
+                <p className="overviewValue">{notReleased}</p>
+              </article>
+              <article className="overviewCard">
+                <div className="overviewCardHeader">
+                  <span className="material-symbols-outlined overviewIcon">campaign</span>
+                  <p className="overviewLabel">Announcements</p>
+                </div>
+                <p className="overviewValue">{announcements.length}</p>
+              </article>
+            </section>
+
             <section className="metricGrid">
-              <article className="heroCard">
-                <div className="heroCardHeader">
-                  <span className="material-symbols-outlined heroIcon">analytics</span>
-                  <span className="badge">CLASS</span>
-                </div>
-                <div>
-                  <p className="heroValue">{totalStudents}</p>
-                  <p className="heroLabel">Students managed</p>
-                </div>
+              <article className="summaryCard">
+                <h3>Pending forms</h3>
+                <p>{pendingForms}</p>
               </article>
-              <article className="metricCard presentCard">
-                <div className="metricCardHeader">
-                  <span className="material-symbols-outlined metricIcon">check_circle</span>
-                  <span className="metricBadge">Present</span>
-                </div>
-                <div>
-                  <p className="metricValue">{present}</p>
-                  <p className="metricText">Today</p>
-                </div>
+              <article className="summaryCard">
+                <h3>Recent incidents</h3>
+                <p>{incidentCount}</p>
               </article>
-              <article className="metricCard lightCard">
-                <div className="metricCardHeader">
-                  <span className="material-symbols-outlined metricIcon muted">person_off</span>
-                  <span className="metricBadge alertBadge">Absent</span>
-                </div>
-                <div>
-                  <p className="metricValue">{absent}</p>
-                  <p className="metricText">Today</p>
-                </div>
+              <article className="summaryCard">
+                <h3>Clinic referrals</h3>
+                <p>{clinicReferrals}</p>
               </article>
-              <article className="metricCard visitorCard">
-                <div className="metricCardHeader">
-                  <span className="material-symbols-outlined metricIcon">schedule</span>
-                  <span className="metricBadge">Late</span>
-                </div>
-                <div>
-                  <p className="metricValue">{late}</p>
-                  <p className="metricText">Today</p>
-                </div>
+              <article className="summaryCard">
+                <h3>Upcoming events</h3>
+                <p>{upcomingEvents.length}</p>
               </article>
             </section>
+
             <section className="sectionHeader">
-              <h2>Quick actions</h2>
-              <button className="smallBtn" type="button" onClick={() => openSheet('attendance')}>Mark Attendance</button>
-            </section>
-            <section className="workflowList">
-              <button type="button" className="workflowCard" onClick={() => openSheet('incident')}>
-                <div>
-                  <h3>Report Incident</h3>
-                  <p>Log classroom safety issues.</p>
-                </div>
-                <small>Incident</small>
-              </button>
-              <button type="button" className="workflowCard" onClick={() => openSheet('announcement')}>
-                <div>
-                  <h3>Send Notice</h3>
-                  <p>Notify parents and staff.</p>
-                </div>
-                <small>Comms</small>
-              </button>
-              <button type="button" className="workflowCard" onClick={() => setActiveTab('release')}>
-                <div>
-                  <h3>Release student</h3>
-                  <p>Approve verified guardian pickup.</p>
-                </div>
-                <small>Release</small>
-              </button>
+              <h2>Upcoming school events</h2>
+              <button className="smallBtn" type="button" onClick={() => openSheet('event')}>Add Event</button>
             </section>
             <section className="featureList">
-              {recentStudents.map((student) => (
-                <article key={student.id} className="reportRow">
+              {upcomingEvents.map((event) => (
+                <article key={event.id} className="reportRow">
                   <div>
-                    <h3>{student.name}</h3>
-                    <p>{student.grade} • {student.section}</p>
+                    <h3>{event.title}</h3>
+                    <p>{event.date}</p>
                   </div>
-                  <span>{student.status}</span>
+                  <span>{event.location || 'Campus'}</span>
                 </article>
               ))}
-              {!recentStudents.length && <p className="emptyText">No students assigned yet.</p>}
+              {!upcomingEvents.length && <p className="emptyText">No upcoming events yet.</p>}
             </section>
-            <section className="activityHeader">
-              <h2>Recent activity</h2>
-              <button className="textButton" type="button">View All</button>
+
+            <section className="sectionHeader">
+              <h2>Recent updates</h2>
+              <button className="textButton" type="button" onClick={() => setActiveTab('comms')}>View All</button>
             </section>
             <section className="activityList">
               {activity.map((item) => (
@@ -214,7 +231,7 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
                   </div>
                 </article>
               ))}
-              {!activity.length && <p className="emptyText">No recent activity yet.</p>}
+              {!activity.length && <p className="emptyText">No recent updates yet.</p>}
             </section>
           </section>
         );
@@ -232,6 +249,10 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
         <button className={`navButton ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
           <span className="material-symbols-outlined">people</span>
           <span>People</span>
+        </button>
+        <button className={`navButton ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
+          <span className="material-symbols-outlined">event</span>
+          <span>Events</span>
         </button>
         <button className={`navButton ${activeTab === 'release' ? 'active' : ''}`} onClick={() => setActiveTab('release')}>
           <span className="material-symbols-outlined">send</span>
