@@ -543,12 +543,6 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                 <strong>{verifiedGuardians}</strong>
               </div>
             </div>
-            <div className="profileActionRow">
-              <button className="logoutPill" type="button" onClick={signOut}>
-                <span className="material-symbols-outlined">logout</span>
-                <span>Sign out of EduSafe</span>
-              </button>
-            </div>
           </section>
         );
       default:
