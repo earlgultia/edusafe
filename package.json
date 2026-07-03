@@ -27,10 +27,10 @@
     }
   },
   "scripts": {
-    "start": "vite --host 0.0.0.0",
-    "dev": "vite --host 0.0.0.0",
+    "start": "vite --host 0.0.0.0 --port 5174",
+    "dev": "vite --host 0.0.0.0 --port 5174",
     "build": "vite build",
-    "preview": "vite preview --host 0.0.0.0",
+    "preview": "vite preview --host 0.0.0.0 --port 5174",
     "test:e2e": "playwright test",
     "test": "vitest"
   },

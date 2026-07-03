@@ -29,6 +29,68 @@ function New-RoundedRectPath {
   return $path
 }
 
+function New-ShieldPath {
+  param(
+    [float]$size,
+    [float]$scale,
+    [float]$offsetY
+  )
+
+  $cx = $size * 0.5
+  $top = $size * $offsetY
+  $w = $size * $scale
+  $h = $size * ($scale * 0.92)
+  $path = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $path.StartFigure()
+  $path.AddBezier(
+    [System.Drawing.PointF]::new($cx, $top),
+    [System.Drawing.PointF]::new($cx + $w * 0.24, $top + $h * 0.15),
+    [System.Drawing.PointF]::new($cx + $w * 0.38, $top + $h * 0.20),
+    [System.Drawing.PointF]::new($cx + $w * 0.50, $top + $h * 0.23)
+  )
+  $path.AddLine($cx + $w * 0.50, $top + $h * 0.23, $cx + $w * 0.50, $top + $h * 0.45)
+  $path.AddBezier(
+    [System.Drawing.PointF]::new($cx + $w * 0.50, $top + $h * 0.45),
+    [System.Drawing.PointF]::new($cx + $w * 0.48, $top + $h * 0.70),
+    [System.Drawing.PointF]::new($cx + $w * 0.24, $top + $h * 0.85),
+    [System.Drawing.PointF]::new($cx, $top + $h)
+  )
+  $path.AddBezier(
+    [System.Drawing.PointF]::new($cx, $top + $h),
+    [System.Drawing.PointF]::new($cx - $w * 0.24, $top + $h * 0.85),
+    [System.Drawing.PointF]::new($cx - $w * 0.48, $top + $h * 0.70),
+    [System.Drawing.PointF]::new($cx - $w * 0.50, $top + $h * 0.45)
+  )
+  $path.AddLine($cx - $w * 0.50, $top + $h * 0.45, $cx - $w * 0.50, $top + $h * 0.23)
+  $path.AddBezier(
+    [System.Drawing.PointF]::new($cx - $w * 0.50, $top + $h * 0.23),
+    [System.Drawing.PointF]::new($cx - $w * 0.38, $top + $h * 0.20),
+    [System.Drawing.PointF]::new($cx - $w * 0.24, $top + $h * 0.15),
+    [System.Drawing.PointF]::new($cx, $top)
+  )
+  $path.CloseFigure()
+  return $path
+}
+
+function Add-Shadow {
+  param(
+    [System.Drawing.Graphics]$graphics,
+    [System.Drawing.Drawing2D.GraphicsPath]$path,
+    [int]$size,
+    [int]$alpha = 55
+  )
+
+  $matrix = New-Object System.Drawing.Drawing2D.Matrix
+  $matrix.Translate(0, [float]($size * 0.018))
+  $shadowPath = $path.Clone()
+  $shadowPath.Transform($matrix)
+  $shadowBrush = [System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb($alpha, 0, 84, 70))
+  $graphics.FillPath($shadowBrush, $shadowPath)
+  $shadowBrush.Dispose()
+  $shadowPath.Dispose()
+  $matrix.Dispose()
+}
+
 function Create-LauncherIcon {
   param(
     [int]$size,
@@ -54,86 +116,97 @@ function Create-LauncherIcon {
     $g.FillPath($bgBrush, $bgPath)
   }
 
-  $highlightRect = [System.Drawing.Rectangle]::new(
-    [int][Math]::Floor($size * 0.08),
-    [int][Math]::Floor($size * 0.08),
-    [int][Math]::Floor($size * 0.84),
-    [int][Math]::Floor($size * 0.42)
-  )
-  $highlightBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
-    $highlightRect,
-    [System.Drawing.Color]::FromArgb(140, 255, 255, 255),
-    [System.Drawing.Color]::FromArgb(0, 255, 255, 255),
+  $white = [System.Drawing.Color]::FromArgb(255, 255, 255, 255)
+  $mint = [System.Drawing.Color]::FromArgb(255, 160, 235, 210)
+  $darkTeal = [System.Drawing.Color]::FromArgb(255, 4, 132, 112)
+
+  $logoState = $g.Save()
+  $logoScale = 0.86
+  $g.TranslateTransform($size * 0.5, $size * 0.5)
+  $g.ScaleTransform($logoScale, $logoScale)
+  $g.TranslateTransform(-$size * 0.5, -$size * 0.5)
+
+  $shieldOuter = New-ShieldPath $size 0.62 0.14
+  Add-Shadow $g $shieldOuter $size 70
+  $g.FillPath([System.Drawing.SolidBrush]::new($white), $shieldOuter)
+
+  $shieldInner = New-ShieldPath $size 0.48 0.22
+  $innerRect = [System.Drawing.RectangleF]::new($size * 0.26, $size * 0.20, $size * 0.48, $size * 0.52)
+  $innerBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+    $innerRect,
+    [System.Drawing.Color]::FromArgb(255, 5, 142, 121),
+    [System.Drawing.Color]::FromArgb(255, 20, 196, 159),
     90
   )
-  $highlightRadius = [int][Math]::Floor($cornerRadius * 0.6)
-  $highlightPath = New-RoundedRectPath $highlightRect.X $highlightRect.Y $highlightRect.Width $highlightRect.Height $highlightRadius
-  $g.FillPath($highlightBrush, $highlightPath)
+  $g.FillPath($innerBrush, $shieldInner)
 
-  $shieldWidth = [int][Math]::Floor($size * 0.54)
-  $shieldHeight = [int][Math]::Floor($size * 0.60)
-  $shieldX = [int][Math]::Floor(($size - $shieldWidth) / 2)
-  $shieldY = [int][Math]::Floor($size * 0.16)
-  $shieldPoints = [System.Drawing.PointF[]]@(
-    [System.Drawing.PointF]::new($size * 0.5, $shieldY),
-    [System.Drawing.PointF]::new($shieldX, $shieldY + $shieldHeight * 0.22),
-    [System.Drawing.PointF]::new($shieldX, $shieldY + $shieldHeight * 0.63),
-    [System.Drawing.PointF]::new($size * 0.5, $shieldY + $shieldHeight),
-    [System.Drawing.PointF]::new($shieldX + $shieldWidth, $shieldY + $shieldHeight * 0.63),
-    [System.Drawing.PointF]::new($shieldX + $shieldWidth, $shieldY + $shieldHeight * 0.22)
+  $headBrush = [System.Drawing.SolidBrush]::new($white)
+  $g.FillEllipse($headBrush, [System.Drawing.RectangleF]::new($size * 0.445, $size * 0.285, $size * 0.11, $size * 0.11))
+
+  $leafLeft = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $leafLeft.AddBezier(
+    [System.Drawing.PointF]::new($size * 0.50, $size * 0.50),
+    [System.Drawing.PointF]::new($size * 0.42, $size * 0.40),
+    [System.Drawing.PointF]::new($size * 0.33, $size * 0.39),
+    [System.Drawing.PointF]::new($size * 0.26, $size * 0.43)
   )
-  $shieldPath = New-Object System.Drawing.Drawing2D.GraphicsPath
-  $shieldPath.AddLines($shieldPoints)
-  $shieldPath.CloseFigure()
-  $shieldFill = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(245, 255, 255, 255))
-  $g.FillPath($shieldFill, $shieldPath)
-  $shieldPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(255, 255, 255, 255), [int][Math]::Floor($size * 0.08))
-  $shieldPen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
-  $g.DrawPath($shieldPen, $shieldPath)
-
-  $schoolWidth = [int][Math]::Floor($shieldWidth * 0.52)
-  $schoolHeight = [int][Math]::Floor($shieldHeight * 0.32)
-  $schoolX = [int][Math]::Floor($size * 0.5 - $schoolWidth / 2)
-  $schoolY = [int][Math]::Floor($shieldY + $shieldHeight * 0.38)
-  $schoolBody = [System.Drawing.RectangleF]::new($schoolX, $schoolY, $schoolWidth, $schoolHeight)
-  $g.FillRectangle([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 15, 118, 110)), $schoolBody)
-
-  $roofHeight = [int][Math]::Floor($schoolHeight * 0.4)
-  $roofPoints = [System.Drawing.PointF[]]@(
-    [System.Drawing.PointF]::new($schoolX - [int][Math]::Floor($schoolWidth * 0.05), $schoolY),
-    [System.Drawing.PointF]::new($schoolX + $schoolWidth / 2, $schoolY - $roofHeight),
-    [System.Drawing.PointF]::new($schoolX + $schoolWidth + [int][Math]::Floor($schoolWidth * 0.05), $schoolY)
+  $leafLeft.AddBezier(
+    [System.Drawing.PointF]::new($size * 0.26, $size * 0.43),
+    [System.Drawing.PointF]::new($size * 0.36, $size * 0.45),
+    [System.Drawing.PointF]::new($size * 0.45, $size * 0.53),
+    [System.Drawing.PointF]::new($size * 0.50, $size * 0.62)
   )
-  $g.FillPolygon([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 255, 255, 255)), $roofPoints)
+  $leafLeft.CloseFigure()
+  $g.FillPath([System.Drawing.SolidBrush]::new($mint), $leafLeft)
 
-  $windowSize = [int][Math]::Floor($schoolWidth * 0.20)
-  $windowGap = [int][Math]::Floor($schoolWidth * 0.10)
-  $windowY = $schoolY + [int][Math]::Floor($schoolHeight * 0.16)
-  $windowX1 = $schoolX + $windowGap
-  $windowX2 = $schoolX + $schoolWidth - $windowGap - $windowSize
-  $g.FillRectangle([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 255, 255, 255)), [System.Drawing.RectangleF]::new($windowX1, $windowY, $windowSize, $windowSize))
-  $g.FillRectangle([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 255, 255, 255)), [System.Drawing.RectangleF]::new($windowX2, $windowY, $windowSize, $windowSize))
+  $leafRight = $leafLeft.Clone()
+  $mirror = New-Object System.Drawing.Drawing2D.Matrix
+  $mirror.Translate($size, 0)
+  $mirror.Scale(-1, 1)
+  $leafRight.Transform($mirror)
+  $g.FillPath([System.Drawing.SolidBrush]::new($mint), $leafRight)
 
-  $doorWidth = [int][Math]::Floor($schoolWidth * 0.18)
-  $doorHeight = [int][Math]::Floor($schoolHeight * 0.40)
-  $doorX = [int][Math]::Floor($size * 0.5 - $doorWidth / 2)
-  $doorY = $schoolY + $schoolHeight - $doorHeight - [int][Math]::Floor($schoolHeight * 0.05)
-  $g.FillRectangle([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 255, 255, 255)), [System.Drawing.RectangleF]::new($doorX, $doorY, $doorWidth, $doorHeight))
-
-  $flagPoleX = $schoolX + [int][Math]::Floor($schoolWidth * 0.88)
-  $flagPoleY1 = $schoolY - [int][Math]::Floor($schoolHeight * 0.35)
-  $flagPoleY2 = $schoolY + [int][Math]::Floor($schoolHeight * 0.05)
-  $polePen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(255, 255, 255, 255), [int][Math]::Floor($size * 0.03))
-  $g.DrawLine($polePen, $flagPoleX, $flagPoleY1, $flagPoleX, $flagPoleY2)
-
-  $flagWidth = [int][Math]::Floor($schoolWidth * 0.20)
-  $flagHeight = [int][Math]::Floor($schoolHeight * 0.17)
-  $flagPoints = [System.Drawing.PointF[]]@(
-    [System.Drawing.PointF]::new($flagPoleX, $flagPoleY1),
-    [System.Drawing.PointF]::new($flagPoleX + $flagWidth, $flagPoleY1 + [int][Math]::Floor($flagHeight * 0.55)),
-    [System.Drawing.PointF]::new($flagPoleX, $flagPoleY1 + $flagHeight)
+  $bookLeft = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $bookLeft.StartFigure()
+  $bookLeft.AddLine($size * 0.32, $size * 0.47, $size * 0.49, $size * 0.52)
+  $bookLeft.AddLine($size * 0.49, $size * 0.52, $size * 0.49, $size * 0.76)
+  $bookLeft.AddBezier(
+    [System.Drawing.PointF]::new($size * 0.49, $size * 0.76),
+    [System.Drawing.PointF]::new($size * 0.43, $size * 0.66),
+    [System.Drawing.PointF]::new($size * 0.36, $size * 0.61),
+    [System.Drawing.PointF]::new($size * 0.33, $size * 0.60)
   )
-  $g.FillPolygon([System.Drawing.SolidBrush]::new([System.Drawing.Color]::FromArgb(255, 255, 255, 255)), $flagPoints)
+  $bookLeft.CloseFigure()
+  $g.FillPath([System.Drawing.SolidBrush]::new($white), $bookLeft)
+
+  $bookRight = New-Object System.Drawing.Drawing2D.GraphicsPath
+  $bookRight.StartFigure()
+  $bookRight.AddLine($size * 0.68, $size * 0.47, $size * 0.51, $size * 0.52)
+  $bookRight.AddLine($size * 0.51, $size * 0.52, $size * 0.51, $size * 0.76)
+  $bookRight.AddBezier(
+    [System.Drawing.PointF]::new($size * 0.51, $size * 0.76),
+    [System.Drawing.PointF]::new($size * 0.57, $size * 0.66),
+    [System.Drawing.PointF]::new($size * 0.64, $size * 0.61),
+    [System.Drawing.PointF]::new($size * 0.67, $size * 0.60)
+  )
+  $bookRight.CloseFigure()
+  $g.FillPath([System.Drawing.SolidBrush]::new($mint), $bookRight)
+
+  $bookPen = New-Object System.Drawing.Pen($white, [int][Math]::Max(2, [Math]::Floor($size * 0.025)))
+  $bookPen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+  $g.DrawPath($bookPen, $bookLeft)
+  $g.DrawPath($bookPen, $bookRight)
+
+  $handPen = New-Object System.Drawing.Pen($white, [int][Math]::Max(5, [Math]::Floor($size * 0.052)))
+  $handPen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
+  $handPen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
+  $handPen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
+  $g.DrawBezier($handPen, $size * 0.17, $size * 0.58, $size * 0.19, $size * 0.78, $size * 0.33, $size * 0.82, $size * 0.47, $size * 0.94)
+  $g.DrawBezier($handPen, $size * 0.31, $size * 0.71, $size * 0.36, $size * 0.82, $size * 0.45, $size * 0.79, $size * 0.50, $size * 0.89)
+  $g.DrawBezier($handPen, $size * 0.83, $size * 0.58, $size * 0.81, $size * 0.78, $size * 0.67, $size * 0.82, $size * 0.53, $size * 0.94)
+  $g.DrawBezier($handPen, $size * 0.69, $size * 0.71, $size * 0.64, $size * 0.82, $size * 0.55, $size * 0.79, $size * 0.50, $size * 0.89)
+
+  $g.Restore($logoState)
 
   $g.Dispose()
   $bmp.Save($filePath, [System.Drawing.Imaging.ImageFormat]::Png)

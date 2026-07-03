@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { clearSessionFromStorage } from '../../app/sessionStorage.js';
 import { CalendarView } from '../../components/CalendarView.jsx';
 
 function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = () => {}, setSheet, signOut, actions }) {
@@ -81,26 +80,6 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                 <span className="headerDate">{dateLabel}</span>
                 <h3>Parent Overview</h3>
                 <p className="headerPersona">Parent • {userName}</p>
-              </div>
-              <div className="headerActions">
-                <button
-                  type="button"
-                  className="logoutBtn"
-                  onClick={() => {
-                      if (typeof signOut === 'function') {
-                        signOut();
-                        return;
-                      }
-                      try {
-                        clearSessionFromStorage(typeof window !== 'undefined' ? window.localStorage : null);
-                      } catch (e) {
-                        // ignore
-                      }
-                      if (typeof window !== 'undefined') window.location.reload();
-                    }}
-                >
-                  Logout
-                </button>
               </div>
             </section>
 
