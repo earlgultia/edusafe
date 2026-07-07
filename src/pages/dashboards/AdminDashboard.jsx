@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 import { ReportPreview } from '../../components/ReportPreview.jsx';
+import { buildNotificationFeed } from '../../app/notificationUtils.js';
 
 function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, signOut, actions }) {
   const [activeTab, setActiveTab] = useState('home');
@@ -28,24 +29,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
   );
   const notificationCount = (data.announcements || []).length;
 
-  const activity = useMemo(() => {
-    const announcements = (data.announcements || []).slice(0, 2).map((item) => ({
-      id: `announcement-${item.id}`,
-      title: item.title,
-      summary: item.body,
-      time: item.priority === 'High' ? 'Just now' : 'Today',
-      tone: item.priority === 'Critical' ? 'alert' : 'normal'
-    }));
-    const incidents = (data.incidents || []).slice(0, 1).map((item) => ({
-      id: `incident-${item.id}`,
-      title: `${item.type} Incident Reported`,
-      summary: item.description,
-      time: 'Today',
-      tone: 'alert'
-    }));
-
-    return [...announcements, ...incidents].slice(0, 3);
-  }, [data.announcements, data.incidents]);
+  const activity = useMemo(() => buildNotificationFeed(data).slice(0, 3), [data]);
 
   const recentStudents = (data.students || []).slice(0, 3);
   const recentTeachers = (data.teachers || []).slice(0, 3);

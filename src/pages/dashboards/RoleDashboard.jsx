@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { AdminDashboard } from './AdminDashboard.jsx';
 import { ParentDashboard } from './ParentDashboard.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
@@ -222,9 +222,6 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
                 <span>Teacher workspace</span>
                 <h2>Welcome, {userName}</h2>
               </div>
-              <button className="logoutButton" type="button" onClick={signOut} aria-label="Sign out">
-                <span className="material-symbols-outlined">logout</span>
-              </button>
             </section>
 
             <section className="overviewRow">
@@ -366,10 +363,111 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
 
 function GuardDashboard({ data = {}, userName = 'Guard', setSheet }) {
   const [activeTab, setActiveTab] = useState('home');
+  const [scanActive, setScanActive] = useState(false);
+  const [scanMessage, setScanMessage] = useState('QR verification ready');
+  const [scanError, setScanError] = useState('');
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
   const visitors = (data.visitors || []).filter((v) => v.status === 'On campus').length;
   const studentWaiting = (data.students || []).filter((student) => student.release === 'Waiting').length;
   const recentVisitors = (data.visitors || []).slice(0, 3);
   const openSheet = (sheet) => setSheet?.(sheet);
+
+  useEffect(() => {
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach((track) => track.stop());
+      }
+    };
+  }, []);
+
+  const stopScan = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current = null;
+    }
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
+    if (canvasRef.current) {
+      canvasRef.current.width = 0;
+      canvasRef.current.height = 0;
+    }
+    setScanActive(false);
+    setScanError('');
+    setScanMessage('QR verification ready');
+  };
+
+  const startScan = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setScanError('Camera access is not supported on this device.');
+      return;
+    }
+
+    try {
+      setScanError('');
+      setScanMessage('Opening camera…');
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+      }
+      setScanActive(true);
+      setScanMessage('Point the camera at a parent QR code.');
+    } catch (error) {
+      setScanError('Camera permission was denied or is unavailable.');
+      setScanMessage('QR verification ready');
+    }
+  };
+
+  useEffect(() => {
+    if (!scanActive || !videoRef.current || !canvasRef.current) return;
+
+    let cancelled = false;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+
+    const tick = async () => {
+      if (cancelled || !scanActive) return;
+
+      if (video.videoWidth && video.videoHeight) {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      }
+
+      if (typeof window !== 'undefined' && 'BarcodeDetector' in window) {
+        try {
+          const detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+          const barcodes = await detector.detect(canvas);
+          if (!cancelled && barcodes?.length) {
+            setScanMessage(`Verified QR: ${barcodes[0].rawValue}`);
+            stopScan();
+            return;
+          }
+        } catch (error) {
+          if (!cancelled) {
+            setScanError('Unable to read QR codes from this camera.');
+          }
+        }
+      } else if (!cancelled) {
+        setScanError('QR scanning is not supported in this browser.');
+      }
+
+      if (!cancelled && scanActive) {
+        setTimeout(tick, 250);
+      }
+    };
+
+    tick();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scanActive]);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -429,9 +527,17 @@ function GuardDashboard({ data = {}, userName = 'Guard', setSheet }) {
                 <h3>Verified guardians</h3>
                 <p>{(data.guardians || []).filter((guardian) => guardian.verified).length}</p>
               </article>
-              <article className="featureCard">
+              <article className="featureCard" onClick={scanActive ? stopScan : startScan} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); (scanActive ? stopScan : startScan)(); } }}>
                 <h3>Scans</h3>
-                <p>QR verification ready</p>
+                <p>{scanMessage}</p>
+                {scanError ? <p className="authFeedback">{scanError}</p> : null}
+                {scanActive ? (
+                  <div className="scanPreviewWrap">
+                    <video ref={videoRef} className="scanVideo" playsInline muted />
+                    <canvas ref={canvasRef} className="scanCanvas" />
+                    <button className="backChip" type="button" onClick={(event) => { event.stopPropagation(); stopScan(); }}>Stop</button>
+                  </div>
+                ) : null}
               </article>
             </section>
             <section className="featureList">

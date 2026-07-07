@@ -143,7 +143,6 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
   return (
     <div className="authScreen formMode">
       <section className="authHeaderCard">
-        <button className="backChip" onClick={onBack}>Back</button>
         <div className="authHeaderCopy">
           <span>Secure sign in</span>
           <h1>Welcome back to EduSafe PH</h1>
@@ -170,6 +169,7 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
         {feedback ? <p className="authFeedback">{feedback}</p> : null}
 
         <button className="submitBtn" type="submit">Sign in</button>
+        <button className="backChip" type="button" onClick={onBack}>Back</button>
         <button className="textLink" type="button" onClick={onRegister}>Need an account? Register</button>
       </form>
     </div>

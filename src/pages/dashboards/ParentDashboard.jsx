@@ -411,13 +411,21 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
           <span className="material-symbols-outlined">home</span>
           <span>Home</span>
         </button>
-        <button className={`navButton ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
-          <span className="material-symbols-outlined">person</span>
-          <span>Profile</span>
+        <button className={`navButton ${activeTab === 'calendar' ? 'active' : ''}`} onClick={() => setActiveTab('calendar')}>
+          <span className="material-symbols-outlined">calendar_month</span>
+          <span>Calendar</span>
         </button>
         <button className={`navButton ${activeTab === 'messages' ? 'active' : ''}`} onClick={() => setActiveTab('messages')}>
           <span className="material-symbols-outlined">chat</span>
           <span>Messages</span>
+        </button>
+        <button className={`navButton ${activeTab === 'lostFound' ? 'active' : ''}`} onClick={() => setActiveTab('lostFound')}>
+          <span className="material-symbols-outlined">inventory</span>
+          <span>Lost & Found</span>
+        </button>
+        <button className={`navButton ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
+          <span className="material-symbols-outlined">person</span>
+          <span>Profile</span>
         </button>
       </nav>
     </div>

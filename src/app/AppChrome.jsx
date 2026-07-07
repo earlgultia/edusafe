@@ -23,7 +23,7 @@ function AppChrome({ role, userName, onSignOut, data, actions }) {
       </div>
 
       <div className="topbarActions">
-        <Notifications notifications={data?.notifications} actions={actions} />
+        <Notifications notifications={data?.notifications} actions={actions} data={data} />
         <div className="userMeta">
           <span className="sessionRole">{role}</span>
           <span className="sessionUser">{userName}</span>

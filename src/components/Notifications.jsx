@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Bell, User, AlertTriangle, Calendar, Thermometer, FileText, Check } from 'lucide-react';
+import { buildNotificationFeed, getUnreadNotificationCount } from '../app/notificationUtils.js';
 
-function Notifications({ notifications = [], actions = {} }) {
+function Notifications({ notifications = [], actions = {}, data = {} }) {
   const [open, setOpen] = useState(false);
-  const unread = (notifications || []).filter((n) => !n.read).length;
+  const feed = buildNotificationFeed({ ...(data || {}), notifications: notifications || [] });
+  const unread = getUnreadNotificationCount(notifications || []);
 
   const markRead = (id) => {
     if (actions.markNotificationRead) actions.markNotificationRead(id);
@@ -48,7 +50,7 @@ function Notifications({ notifications = [], actions = {} }) {
             </div>
           </div>
           <div className="notifList">
-            {(notifications || []).slice(0, 20).map((n) => (
+            {feed.slice(0, 20).map((n) => (
               <button key={n.id} className={`notifItem ${n.read ? 'read' : 'unread'}`} onClick={() => markRead(n.id)}>
                 <div className="notifIcon">{iconFor(n.type)}</div>
                 <div className="notifBody">
@@ -56,11 +58,11 @@ function Notifications({ notifications = [], actions = {} }) {
                     <strong className="notifTitle">{n.title}</strong>
                     <span className="muted">{n.time}</span>
                   </div>
-                  <div className="notifText">{n.body}</div>
+                  <div className="notifText">{n.summary || n.body}</div>
                 </div>
               </button>
             ))}
-            {!notifications.length && <div className="emptyText">No notifications</div>}
+            {!feed.length && <div className="emptyText">No notifications</div>}
           </div>
         </div>
       )}
