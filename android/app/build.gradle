@@ -23,6 +23,39 @@ android {
         versionCode 1
         versionName '1.0'
     }
+
+    // Optional release signing configuration using a local key.properties file.
+    // Create a file at android/key.properties with these keys if you want to sign releases locally:
+    // storeFile=/absolute/path/to/keystore.jks
+    // storePassword=your_store_password
+    // keyAlias=your_key_alias
+    // keyPassword=your_key_password
+    def keystorePropertiesFile = rootProject.file('key.properties')
+    def keystoreProperties = new Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
 }
 
 tasks.register('buildWebApp', Exec) {

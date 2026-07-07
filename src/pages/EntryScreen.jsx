@@ -115,15 +115,20 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [feedback, setFeedback] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const result = validateLoginForm({ ...form, fallbackRole: role });
+    if (loading) return;
 
+    const result = validateLoginForm({ ...form, fallbackRole: role });
     if (!result.ok) {
       setFeedback(result.message);
       return;
     }
+
+    setLoading(true);
+    setFeedback('Signing in...');
 
     const authResult = await authenticateAccount({
       schoolId: '',
@@ -131,6 +136,7 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
       password: form.password
     });
 
+    setLoading(false);
     if (!authResult.ok) {
       setFeedback(authResult.message);
       return;
@@ -170,9 +176,9 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
 
         {feedback ? <p className="authFeedback">{feedback}</p> : null}
 
-        <button className="submitBtn" type="submit">Sign in</button>
-        <button className="backChip" type="button" onClick={onBack}>Back</button>
-        <button className="textLink" type="button" onClick={onRegister}>Need an account? Register</button>
+        <button className="submitBtn" type="submit" disabled={loading}>{loading ? 'Signing in…' : 'Sign in'}</button>
+        <button className="backChip" type="button" onClick={onBack} disabled={loading}>Back</button>
+        <button className="textLink" type="button" onClick={onRegister} disabled={loading}>Need an account? Register</button>
       </form>
     </div>
   );

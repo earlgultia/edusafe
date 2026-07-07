@@ -101,7 +101,7 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
               <h2>People</h2>
               <button className="smallBtn" type="button" onClick={() => openSheet('teacher')}>Add Teacher</button>
             </div>
-            <PeopleSheet data={data} />
+            <PeopleSheet data={data} actions={actions} />
           </section>
         );
       case 'comms':
@@ -399,15 +399,32 @@ function GuardDashboard({ data = {}, userName = 'Guard', setSheet }) {
     setScanMessage('QR verification ready');
   };
 
+  const checkCameraPermission = async () => {
+    if (!navigator.permissions?.query) return null;
+    try {
+      const status = await navigator.permissions.query({ name: 'camera' });
+      return status.state;
+    } catch (error) {
+      return null;
+    }
+  };
+
   const startScan = async () => {
     if (!navigator.mediaDevices?.getUserMedia) {
       setScanError('Camera access is not supported on this device.');
       return;
     }
 
+    const permissionState = await checkCameraPermission();
+    if (permissionState === 'denied') {
+      setScanError('Camera permission is denied. Please allow camera access in your phone settings.');
+      setScanMessage('QR verification ready');
+      return;
+    }
+
     try {
       setScanError('');
-      setScanMessage('Opening camera…');
+      setScanMessage('Requesting camera permission…');
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -417,7 +434,13 @@ function GuardDashboard({ data = {}, userName = 'Guard', setSheet }) {
       setScanActive(true);
       setScanMessage('Point the camera at a parent QR code.');
     } catch (error) {
-      setScanError('Camera permission was denied or is unavailable.');
+      if (error?.name === 'NotAllowedError' || error?.name === 'PermissionDeniedError') {
+        setScanError('Camera access was denied. Please allow camera permission when prompted.');
+      } else if (error?.name === 'NotFoundError') {
+        setScanError('No camera was found on this device.');
+      } else {
+        setScanError('Camera permission was denied or is unavailable.');
+      }
       setScanMessage('QR verification ready');
     }
   };
@@ -533,7 +556,7 @@ function GuardDashboard({ data = {}, userName = 'Guard', setSheet }) {
                 {scanError ? <p className="authFeedback">{scanError}</p> : null}
                 {scanActive ? (
                   <div className="scanPreviewWrap">
-                    <video ref={videoRef} className="scanVideo" playsInline muted />
+                    <video ref={videoRef} className="scanVideo" playsInline muted autoPlay />
                     <canvas ref={canvasRef} className="scanCanvas" />
                     <button className="backChip" type="button" onClick={(event) => { event.stopPropagation(); stopScan(); }}>Stop</button>
                   </div>

@@ -3376,6 +3376,14 @@ nav.fixed { height: 74px; }
   font-size: 0.77rem;
   font-weight: 800;
 }
+.peopleItemActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.textButton.danger {
+  color: #b91c1c;
+}
 .featureCard p,
 .workflowCard p {
   margin: 0;
@@ -3641,17 +3649,21 @@ nav.fixed { height: 74px; }
 }
 
 .scanPreviewWrap {
+  position: relative;
   display: grid;
   gap: 8px;
   margin-top: 8px;
 }
 
 .scanVideo {
+  display: block;
   width: 100%;
-  max-height: 220px;
-  border-radius: 10px;
-  background: #0f172a;
+  min-height: 320px;
+  max-height: 420px;
+  border-radius: 14px;
+  background: #000;
   object-fit: cover;
+  outline: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .scanCanvas {

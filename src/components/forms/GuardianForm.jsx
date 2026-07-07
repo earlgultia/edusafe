@@ -4,11 +4,15 @@ import { FormShell, Field, Select } from '../FormFields.jsx';
 function GuardianForm({ close, actions, data }) {
   const studentOptions = (data.students || []).map((student) => `${student.id}:${student.name}`);
   const hasStudents = studentOptions.length > 0;
+  const parseStudentId = (value) => {
+    const id = Number(value);
+    return Number.isNaN(id) ? value : id;
+  };
   const [form, setForm] = useState({
     name: '',
     relation: 'Mother',
     phone: '',
-    studentId: studentOptions[0]?.split(':')[0] ?? '',
+    studentId: parseStudentId(studentOptions[0]?.split(':')[0] ?? ''),
     verified: true,
     photo: '',
     validId: '',
@@ -57,7 +61,7 @@ function GuardianForm({ close, actions, data }) {
         label="Student"
         value={form.studentId}
         options={studentOptions.length ? studentOptions : ['']}
-        onChange={(studentId) => setForm({ ...form, studentId: studentId.split(':')[0] })}
+        onChange={(studentId) => setForm({ ...form, studentId: parseStudentId(studentId.split(':')[0]) })}
       />
       <Select label="Verification" value={form.verified ? 'Verified' : 'Pending'} options={['Verified', 'Pending']} onChange={(verified) => setForm({ ...form, verified: verified === 'Verified' })} />
       {!hasStudents && <p className="fieldNote">Add a student first before assigning a guardian.</p>}

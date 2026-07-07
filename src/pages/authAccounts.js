@@ -52,7 +52,7 @@ function writeAccounts(accounts) {
   }
 }
 
-async function waitForRemoteResult(promise, timeoutMs = 400) {
+async function waitForRemoteResult(promise, timeoutMs = 10000) {
   return await new Promise((resolve) => {
     const timeoutId = setTimeout(() => resolve({ timedOut: true }), timeoutMs);
 
@@ -185,16 +185,25 @@ async function authenticateAccount({ schoolId, email, password }) {
     return String(item.schoolId || '').trim() === normalizedSchoolId;
   });
 
+  const storedPassword = String(account?.password ?? '');
+  const enteredPassword = String(password ?? '');
+  const trimmedStoredPassword = normalizePassword(storedPassword);
+  const trimmedEnteredPassword = normalizePassword(enteredPassword);
+  const localPasswordMatches = account && (storedPassword === enteredPassword || trimmedStoredPassword === trimmedEnteredPassword);
+
+  if (localPasswordMatches) {
+    void syncProfileToSupabase(account);
+    return { ok: true, role: account.role, account };
+  }
+
   if (supabase && typeof supabase.auth?.signInWithPassword === 'function') {
     try {
-      const remoteResult = await waitForRemoteResult(
-        supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password: String(password || '')
-        })
-      );
+      const remoteResult = await supabase.auth.signInWithPassword({
+        email: normalizedEmail,
+        password: String(password || '')
+      });
 
-      if (!remoteResult?.timedOut && !remoteResult?.error && remoteResult?.data?.user) {
+      if (!remoteResult?.error && remoteResult?.data?.user) {
         const fallbackAccount = {
           id: remoteResult.data.user.id,
           fullName: remoteResult.data.user.user_metadata?.full_name || normalizedEmail,
@@ -214,11 +223,6 @@ async function authenticateAccount({ schoolId, email, password }) {
   if (!account) {
     return { ok: false, message: 'We could not find an account with those details.' };
   }
-
-  const storedPassword = String(account.password ?? '');
-  const enteredPassword = String(password ?? '');
-  const trimmedStoredPassword = normalizePassword(storedPassword);
-  const trimmedEnteredPassword = normalizePassword(enteredPassword);
 
   if (storedPassword !== enteredPassword && trimmedStoredPassword !== trimmedEnteredPassword) {
     return { ok: false, message: 'The password you entered is incorrect.' };

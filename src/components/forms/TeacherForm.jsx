@@ -8,8 +8,9 @@ function TeacherForm({ close, actions }) {
     birthday: '',
     contact: '',
     email: '',
-    advisory: '',
-    position: 'Grade Adviser'
+    position: 'Grade Adviser',
+    grade: '',
+    section: ''
   });
 
   return (
@@ -25,7 +26,8 @@ function TeacherForm({ close, actions }) {
         options={['Grade Adviser', 'Classroom Teacher', 'Nurse', 'Guard', 'Admin']}
         onChange={(position) => setForm({ ...form, position })}
       />
-      <Field label="Advisory class" value={form.advisory} onChange={(advisory) => setForm({ ...form, advisory })} />
+      <Field label="Grade" value={form.grade} onChange={(grade) => setForm({ ...form, grade })} />
+      <Field label="Section" value={form.section} onChange={(section) => setForm({ ...form, section })} />
     </FormShell>
   );
 }

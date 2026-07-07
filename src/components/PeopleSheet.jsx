@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-function PeopleSheet({ close, data }) {
+function PeopleSheet({ close, data, actions }) {
   const [activeTab, setActiveTab] = useState('students');
   const [query, setQuery] = useState('');
   const [guardianFilter, setGuardianFilter] = useState('all');
@@ -8,6 +8,25 @@ function PeopleSheet({ close, data }) {
   const students = data.students || [];
   const teachers = data.teachers || [];
   const guardians = data.guardians || [];
+
+  const actionMap = {
+    students: actions?.removeStudent,
+    teachers: actions?.removeTeacher,
+    guardians: actions?.removeGuardian
+  };
+
+  const removeLabel = {
+    students: 'student',
+    teachers: 'teacher',
+    guardians: 'guardian'
+  };
+
+  const handleDelete = (item) => {
+    const removeFn = actionMap[activeTab];
+    if (!removeFn) return;
+    if (!window.confirm(`Delete ${removeLabel[activeTab]} "${item.name}"? This cannot be undone.`)) return;
+    removeFn(item.id);
+  };
 
   const filtered = useMemo(() => {
     const filterItems = (items, keys) => items.filter((item) =>
@@ -22,7 +41,7 @@ function PeopleSheet({ close, data }) {
 
     return {
       students: filterItems(students, ['name', 'grade', 'section', 'guardian', 'status']),
-      teachers: filterItems(teachers, ['name', 'position', 'advisory', 'email', 'employeeNo']),
+      teachers: filterItems(teachers, ['name', 'position', 'grade', 'section', 'advisory', 'email', 'employeeNo']),
       guardians: filteredGuardians
     };
   }, [query, students, teachers, guardians, guardianFilter]);
@@ -93,22 +112,31 @@ function PeopleSheet({ close, data }) {
                 <strong>{item.name}</strong>
                 <p>
                   {activeTab === 'students' && `${item.grade} • ${item.section}`}
-                  {activeTab === 'teachers' && item.position}
+                  {activeTab === 'teachers' && `${item.position}${item.grade || item.section ? ` • ${item.grade || ''}${item.grade && item.section ? ' • ' : ''}${item.section || ''}` : ''}`}
                   {activeTab === 'guardians' && (item.institution ? `Institution: ${item.institution}` : item.relation)}
                 </p>
               </div>
-              <span>
-                {activeTab === 'students' && item.status}
-                {activeTab === 'teachers' && item.advisory}
-                {activeTab === 'guardians' && (item.verified ? 'Verified' : 'Pending')}
-              </span>
+              <div className="peopleItemActions">
+                <span>
+                  {activeTab === 'students' && item.status}
+                  {activeTab === 'teachers' && item.advisory}
+                  {activeTab === 'guardians' && (item.verified ? 'Verified' : 'Pending')}
+                </span>
+                {actionMap[activeTab] && (
+                  <button className="textButton danger" type="button" onClick={() => handleDelete(item)}>
+                    Delete
+                  </button>
+                )}
+              </div>
             </article>
           ))}
           {!activeList.length && <p className="emptyText">No matching records found.</p>}
         </div>
       </section>
 
-      <button className="smallBtn" type="button" onClick={close}>Close</button>
+      {close && (
+        <button className="smallBtn" type="button" onClick={close}>Close</button>
+      )}
     </div>
   );
 }

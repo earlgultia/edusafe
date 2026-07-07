@@ -1,4 +1,5 @@
 .gradle/
 local.properties
+key.properties
 **/build/
 app/src/main/assets/www/

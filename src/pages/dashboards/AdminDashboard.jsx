@@ -570,7 +570,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
             <div className="sectionHeader">
               <h2>People registry</h2>
             </div>
-            <PeopleSheet data={data} />
+            <PeopleSheet data={data} actions={actions} />
           </section>
         );
       case 'profile':
