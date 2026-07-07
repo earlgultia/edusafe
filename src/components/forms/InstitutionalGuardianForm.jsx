@@ -4,10 +4,7 @@ import { FormShell, Field, Select } from '../FormFields.jsx';
 function InstitutionalGuardianForm({ close, actions, data }) {
   const studentOptions = (data.students || []).map((student) => `${student.id}:${student.name}`);
   const hasStudents = studentOptions.length > 0;
-  const parseStudentId = (value) => {
-    const id = Number(value);
-    return Number.isNaN(id) ? value : id;
-  };
+  const parseStudentId = (value) => String(value || '');
   const [form, setForm] = useState({
     name: '',
     relation: 'Institution',

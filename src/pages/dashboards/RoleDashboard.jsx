@@ -672,16 +672,18 @@ function NurseDashboard({ data = {}, userName = 'Nurse', setSheet }) {
 }
 
 function RoleDashboard({ role, data, stats, userName, auth, setAuth, setSheet, signOut, actions }) {
-  switch (role) {
-    case 'Teacher':
+  const normalizedRole = String(role || 'Admin').trim().toLowerCase();
+
+  switch (normalizedRole) {
+    case 'teacher':
       return <TeacherDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} actions={actions} />;
-    case 'Parent':
+    case 'parent':
       return <ParentDashboard data={data} userName={userName} auth={auth} setAuth={setAuth} setSheet={setSheet} signOut={signOut} actions={actions} />;
-    case 'Guard':
+    case 'guard':
       return <GuardDashboard data={data} userName={userName} setSheet={setSheet} signOut={signOut} />;
-    case 'Nurse':
+    case 'nurse':
       return <NurseDashboard data={data} userName={userName} setSheet={setSheet} signOut={signOut} />;
-    case 'Admin':
+    case 'admin':
     default:
       return <AdminDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} actions={actions} />;
   }

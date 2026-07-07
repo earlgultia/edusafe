@@ -133,7 +133,8 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
     const authResult = await authenticateAccount({
       schoolId: '',
       email: form.email,
-      password: form.password
+      password: form.password,
+      fallbackRole: role || 'Admin'
     });
 
     setLoading(false);

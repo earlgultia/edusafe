@@ -3,23 +3,22 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-
   "dependencies": {
     "@supabase/supabase-js": "^2.110.0",
     "@vitejs/plugin-legacy": "latest",
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
+    "node-fetch": "^3.3.2",
     "qrcode": "latest",
     "react": "latest",
     "react-dom": "latest",
     "vite": "latest"
-  }
-  ,
+  },
   "devDependencies": {
-    "vitest": "^1.0.0",
-    "@testing-library/react": "^14.0.0",
     "@testing-library/jest-dom": "^6.0.0",
-    "jsdom": "^22.0.0"
+    "@testing-library/react": "^14.0.0",
+    "jsdom": "^22.0.0",
+    "vitest": "^1.0.0"
   },
   "devDependenciesMeta": {
     "@playwright/test": {

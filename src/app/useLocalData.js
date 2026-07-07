@@ -24,14 +24,40 @@ function useLocalData(userEmail = '') {
   useEffect(() => {
     let cancelled = false;
 
+    const mergeAppData = (local, remote) => {
+      if (!remote) return local;
+      const merged = { ...local, ...remote };
+      const sharedFields = ['students', 'teachers', 'guardians', 'attendanceLog'];
+
+      sharedFields.forEach((field) => {
+        const localField = local[field] || [];
+        const remoteField = remote[field];
+
+        if (remoteField === undefined) {
+          merged[field] = localField;
+          return;
+        }
+
+        if (Array.isArray(localField) && Array.isArray(remoteField)) {
+          const remoteIds = new Set(remoteField.map((item) => item.id));
+          merged[field] = [...remoteField, ...localField.filter((item) => !remoteIds.has(item.id))];
+        }
+      });
+
+      return merged;
+    };
+
     const loadRemoteData = async () => {
       if (!userEmail) return;
 
       const remoteData = await readRemoteAppData();
       if (cancelled || !remoteData) return;
 
-      localStorage.setItem('edusafe-data', JSON.stringify(remoteData));
-      setData(remoteData);
+      setData((current) => {
+        const next = mergeAppData(current, remoteData);
+        localStorage.setItem('edusafe-data', JSON.stringify(next));
+        return next;
+      });
     };
 
     void loadRemoteData();

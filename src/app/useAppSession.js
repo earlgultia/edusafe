@@ -2,6 +2,14 @@ import { useEffect, useState } from 'react';
 
 import { clearSessionFromStorage, readSessionFromStorage, writeSessionToStorage } from './sessionStorage.js';
 
+const KNOWN_ROLES = ['Admin', 'Teacher', 'Parent', 'Guard', 'Nurse'];
+
+function normalizeRole(role, fallback = 'Admin') {
+  const normalized = String(role || '').trim();
+  const matched = KNOWN_ROLES.find((knownRole) => knownRole.toLowerCase() === normalized.toLowerCase());
+  return matched || fallback;
+}
+
 function useAppSession() {
   const [tab, setTab] = useState('dashboard');
   const [auth, setAuth] = useState({ signedIn: false, role: 'Admin', fullName: 'Guest', email: '' });
@@ -14,7 +22,7 @@ function useAppSession() {
     if (storedSession?.signedIn) {
       setAuth({
         signedIn: true,
-        role: storedSession.role || 'Admin',
+        role: normalizeRole(storedSession.role, 'Admin'),
         fullName: storedSession.fullName || 'Guest',
         email: storedSession.email || ''
       });
@@ -38,7 +46,7 @@ function useAppSession() {
 
     setAuth({
       signedIn: true,
-      role: nextAccount.role || 'Admin',
+      role: normalizeRole(nextAccount.role, 'Admin'),
       fullName: nextAccount.fullName || 'User',
       email: nextAccount.email || ''
     });

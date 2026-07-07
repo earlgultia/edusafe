@@ -8,6 +8,11 @@ test('infers a role from a clear email hint', () => {
   assert.equal(inferRoleFromAccount('teacher@school.edu.ph', 'Parent'), 'Teacher');
 });
 
+test('infers Parent from parent or guardian email hints', () => {
+  assert.equal(inferRoleFromAccount('parent@school.edu.ph', 'Admin'), 'Parent');
+  assert.equal(inferRoleFromAccount('guardian@school.edu.ph', 'Teacher'), 'Parent');
+});
+
 test('falls back to the chosen role when no clear role hint exists', () => {
   assert.equal(inferRoleFromAccount('student@school.edu.ph', 'Nurse'), 'Nurse');
 });

@@ -2,12 +2,13 @@ function createAppActions(setData) {
   return {
     addNotification: (note) => setData((d) => ({ ...d, notifications: [{ id: Date.now(), read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), ...note }, ...(d.notifications || [])] })),
     markNotificationRead: (id) => setData((d) => ({ ...d, notifications: (d.notifications || []).map((n) => (n.id === id ? { ...n, read: true } : n)) })),
-    addStudent: (student) => setData((d) => ({ ...d, students: [{ id: Date.now(), ...student, release: 'Waiting' }, ...(d.students || [])] })),
+    addStudent: (student) => setData((d) => {
+      const studentId = String(student.lrn || Date.now());
+      return { ...d, students: [{ id: studentId, ...student, release: 'Waiting' }, ...(d.students || [])] };
+    }),
     addTeacher: (teacher) => setData((d) => ({ ...d, teachers: [{ id: Date.now(), ...teacher }, ...(d.teachers || [])] })),
     addGuardian: (guardian) => setData((d) => {
-      const normalizedStudentId = typeof guardian.studentId === 'string' && /^\d+$/.test(guardian.studentId)
-        ? Number(guardian.studentId)
-        : guardian.studentId;
+      const normalizedStudentId = String(guardian.studentId || '');
       return {
         ...d,
         guardians: [{

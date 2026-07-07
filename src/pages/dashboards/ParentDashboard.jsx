@@ -13,8 +13,9 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
   const [profileDraft, setProfileDraft] = useState({ fullName: auth.fullName || userName, email: auth.email || '' });
   const announcements = data.announcements || [];
   const students = data.students || [];
-  const currentStudentId = selectedStudentId || students[0]?.id || '';
-  const selectedStudent = students.find((child) => child.id === currentStudentId) || {};
+  const defaultStudentId = students[0] ? String(students[0].id) : '';
+  const currentStudentId = selectedStudentId || defaultStudentId;
+  const selectedStudent = students.find((child) => String(child.id) === currentStudentId) || {};
   const guardians = data.guardians || [];
   const childGuardians = guardians.filter((guardian) => guardian.studentId === selectedStudent.id);
   const attendanceLog = data.attendanceLog || [];
