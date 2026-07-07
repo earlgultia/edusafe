@@ -144,9 +144,11 @@ function LoginScreen({ role, onBack, onRegister, onSubmit }) {
     <div className="authScreen formMode">
       <section className="authHeaderCard">
         <div className="authHeaderCopy">
-          <span>Secure sign in</span>
           <h1>Welcome back to EduSafe PH</h1>
           <p>Enter your school access credentials to continue into the mobile workspace.</p>
+          <div className="authPortalBadge" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginTop: '0.85rem', padding: '0', borderRadius: '0', background: 'transparent', color: '#1d4ed8', fontWeight: 700, fontSize: '0.95rem', letterSpacing: '0.01em' }}>
+            <span>Secured Access Portal by: ArkByte Technologies</span>
+          </div>
         </div>
       </section>
 
@@ -216,7 +218,6 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
   return (
     <div className="authScreen formMode">
       <section className="authHeaderCard registerHeader">
-        <button className="backChip" onClick={onBack}>Back</button>
         <div className="authHeaderCopy">
           <span>Create your account</span>
           <h1>Set up your EduSafe PH profile</h1>
@@ -301,6 +302,7 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
         {feedback ? <p className="authFeedback">{feedback}</p> : null}
 
         <button className="submitBtn" type="submit">Create account</button>
+        <button className="backChip" type="button" onClick={onBack}>Back</button>
         <button className="textLink" type="button" onClick={onLogin}>Already have an account? Sign in</button>
       </form>
     </div>

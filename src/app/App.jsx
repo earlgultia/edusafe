@@ -8,8 +8,8 @@ import { useAppSession } from './useAppSession.js';
 import { useLocalData } from './useLocalData.js';
 
 function App() {
-  const [data, setData] = useLocalData();
   const session = useAppSession();
+  const [data, setData] = useLocalData(session.auth.signedIn ? session.auth.email : '');
   const role = session.auth.role;
 
   const stats = useMemo(() => getDashboardStats(data), [data]);

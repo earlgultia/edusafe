@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
+import { supabase } from '../lib/supabaseClient.js';
 import { authenticateAccount, buildAccountFromSupabaseUser, registerAccount } from './authAccounts.js';
 
 test('maps a Supabase user to a profile account', () => {
@@ -57,4 +58,30 @@ test('rejects a wrong password for an existing account', async () => {
 
   assert.equal(authenticated.ok, false);
   assert.match(authenticated.message, /password/i);
+});
+
+test('uses the local account store without waiting on Supabase when available', async () => {
+  if (!supabase) {
+    return;
+  }
+
+  const email = `local-supabase-${Date.now()}@school.edu.ph`;
+  const registered = await registerAccount({
+    fullName: 'Local Supabase User',
+    email,
+    schoolId: 'ESP-2026-003',
+    password: 'LocalPass123!',
+    role: 'Parent'
+  });
+
+  assert.equal(registered.ok, true);
+
+  const authenticated = await authenticateAccount({
+    schoolId: 'ESP-2026-003',
+    email,
+    password: 'LocalPass123!'
+  });
+
+  assert.equal(authenticated.ok, true);
+  assert.equal(authenticated.role, 'Parent');
 });

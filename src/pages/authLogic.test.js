@@ -29,3 +29,21 @@ test('rejects mismatched passwords during registration', () => {
   assert.equal(result.ok, false);
   assert.match(result.message, /match/i);
 });
+
+test('rejects SQL-injection-like login input', () => {
+  const result = validateLoginForm({ email: "admin@example.com' OR '1'='1", password: 'whatever' });
+  assert.equal(result.ok, false);
+  assert.match(result.message, /valid/i);
+});
+
+test('rejects script-like registration input', () => {
+  const result = validateRegisterForm({
+    fullName: '<script>alert(1)</script>',
+    email: 'parent@school.edu.ph',
+    password: 'StrongPass123!',
+    confirmPassword: 'StrongPass123!',
+    mobile: '+639171234567'
+  });
+  assert.equal(result.ok, false);
+  assert.match(result.message, /valid/i);
+});
