@@ -53,7 +53,28 @@ function createAppActions(setData) {
     checkoutVisitor: (id) => setData((d) => ({ ...d, visitors: (d.visitors || []).map((v) => (v.id === id ? { ...v, status: 'Checked out', timeOut: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } : v)) })),
     addIncident: (incident) => setData((d) => ({ ...d, incidents: [{ id: Date.now(), status: 'Submitted', ...incident }, ...(d.incidents || [])], notifications: [{ id: Date.now(), type: 'incident', title: 'Incident reported', body: `${incident.student || 'A student'} - ${incident.type}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
     addClinic: (record) => setData((d) => ({ ...d, clinic: [{ id: Date.now(), ...record }, ...(d.clinic || [])], notifications: [{ id: Date.now(), type: 'clinic', title: 'Clinic visit', body: `${record.student || 'A student'} visited the clinic.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
-    addAnnouncement: (announcement) => setData((d) => ({ ...d, announcements: [{ id: Date.now(), ...announcement }, ...(d.announcements || [])], notifications: [{ id: Date.now(), type: 'announcement', title: announcement.title || 'Announcement', body: announcement.body || '', read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
+    addAnnouncement: (announcement) => {
+      setData((d) => ({ ...d, announcements: [{ id: Date.now(), ...announcement }, ...(d.announcements || [])], notifications: [{ id: Date.now(), type: 'announcement', title: announcement.title || 'Announcement', body: announcement.body || '', read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] }));
+
+      // Best-effort: notify backend to push to the audience
+      (async () => {
+        try {
+          let role = (announcement.audience || 'All');
+          // normalize audience options
+          if (/parent/i.test(role)) role = 'Parent';
+          if (/teacher/i.test(role)) role = 'Teacher';
+          if (/all/i.test(role)) role = 'All';
+
+          await fetch('/api/sendRole', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role, title: announcement.title, body: announcement.body })
+          });
+        } catch (e) {
+          // ignore network/send errors (app remains functional)
+        }
+      })();
+    },
     addEvent: (event) => setData((d) => ({ ...d, events: [{ id: Date.now(), ...event }, ...(d.events || [])], notifications: [{ id: Date.now(), type: 'event', title: event.title || 'Event', body: `${event.title} on ${event.date}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
     addLostFound: (item) => setData((d) => ({
       ...d,

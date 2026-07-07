@@ -44,6 +44,22 @@ function useAppSession() {
     });
     setTab('dashboard');
     setEntryView('landing');
+    // Initialize native push registration (best-effort)
+    (async () => {
+      try {
+        const mod = await import('../lib/nativePush.js');
+        if (mod && typeof mod.initNativePush === 'function') {
+          const result = await mod.initNativePush({ email: nextAccount.email || '', role: nextAccount.role || '' });
+          // expose simulation helper in dev for manual testing
+          if (typeof window !== 'undefined' && import.meta?.env?.DEV && typeof mod.simulatePushForDev === 'function') {
+            try { window.__simulatePush = mod.simulatePushForDev; } catch (e) { /* ignore */ }
+          }
+          void result;
+        }
+      } catch (e) {
+        // ignore failures in web/dev environments
+      }
+    })();
   };
 
   const signOut = () => {

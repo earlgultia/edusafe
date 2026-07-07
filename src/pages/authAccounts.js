@@ -3,6 +3,11 @@ import { supabase } from '../lib/supabaseClient.js';
 const ACCOUNT_STORE_KEY = 'edusafe-accounts';
 let memoryAccounts = [];
 
+function normalizePassword(value) {
+  const text = String(value ?? '');
+  return text.trim();
+}
+
 function getStorage() {
   if (typeof window !== 'undefined' && window.localStorage) {
     return window.localStorage;
@@ -136,7 +141,7 @@ async function registerAccount(account) {
     fullName: String(account.fullName || '').trim(),
     email: normalizedEmail,
     schoolId: normalizedSchoolId,
-    password: String(account.password || ''),
+    password: normalizePassword(account.password),
     role: account.role,
     phone: String(account.phone || '').trim()
   };
@@ -180,37 +185,42 @@ async function authenticateAccount({ schoolId, email, password }) {
     return String(item.schoolId || '').trim() === normalizedSchoolId;
   });
 
-  if (!account) {
-    if (supabase && typeof supabase.auth?.signInWithPassword === 'function') {
-      try {
-        const remoteResult = await waitForRemoteResult(
-          supabase.auth.signInWithPassword({
-            email: normalizedEmail,
-            password: String(password || '')
-          })
-        );
+  if (supabase && typeof supabase.auth?.signInWithPassword === 'function') {
+    try {
+      const remoteResult = await waitForRemoteResult(
+        supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: String(password || '')
+        })
+      );
 
-        if (!remoteResult?.timedOut && !remoteResult?.error && remoteResult?.data?.user) {
-          const fallbackAccount = {
-            id: remoteResult.data.user.id,
-            fullName: remoteResult.data.user.user_metadata?.full_name || normalizedEmail,
-            email: normalizedEmail,
-            schoolId: normalizedSchoolId,
-            role: remoteResult.data.user.user_metadata?.role || 'Parent',
-            phone: remoteResult.data.user.user_metadata?.phone || ''
-          };
-          writeAccounts([...accounts, fallbackAccount]);
-          return { ok: true, role: fallbackAccount.role, account: fallbackAccount };
-        }
-      } catch {
-        // Fall through to the local login error below.
+      if (!remoteResult?.timedOut && !remoteResult?.error && remoteResult?.data?.user) {
+        const fallbackAccount = {
+          id: remoteResult.data.user.id,
+          fullName: remoteResult.data.user.user_metadata?.full_name || normalizedEmail,
+          email: normalizedEmail,
+          schoolId: normalizedSchoolId,
+          role: remoteResult.data.user.user_metadata?.role || 'Parent',
+          phone: remoteResult.data.user.user_metadata?.phone || ''
+        };
+        writeAccounts([...accounts.filter((item) => String(item.email || '').toLowerCase() !== normalizedEmail), fallbackAccount]);
+        return { ok: true, role: fallbackAccount.role, account: fallbackAccount };
       }
+    } catch {
+      // Fall through to the local account check below.
     }
+  }
 
+  if (!account) {
     return { ok: false, message: 'We could not find an account with those details.' };
   }
 
-  if (account.password !== String(password || '')) {
+  const storedPassword = String(account.password ?? '');
+  const enteredPassword = String(password ?? '');
+  const trimmedStoredPassword = normalizePassword(storedPassword);
+  const trimmedEnteredPassword = normalizePassword(enteredPassword);
+
+  if (storedPassword !== enteredPassword && trimmedStoredPassword !== trimmedEnteredPassword) {
     return { ok: false, message: 'The password you entered is incorrect.' };
   }
 

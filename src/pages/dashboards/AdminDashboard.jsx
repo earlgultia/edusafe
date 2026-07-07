@@ -2,9 +2,14 @@ import React, { useMemo, useState } from 'react';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 import { ReportPreview } from '../../components/ReportPreview.jsx';
 import { buildNotificationFeed } from '../../app/notificationUtils.js';
+import { supabase } from '../../lib/supabaseClient.js';
 
 function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, signOut, actions }) {
   const [activeTab, setActiveTab] = useState('home');
+  const [announceForm, setAnnounceForm] = useState({ title: '', audience: 'All', body: '', priority: 'Normal' });
+  const [devices, setDevices] = useState([]);
+  const [loadingDevices, setLoadingDevices] = useState(false);
+  const [selectedTokens, setSelectedTokens] = useState([]);
   const school = data.school || {};
   const schoolName = school.name || 'School profile not set';
   const schoolType = school.type || 'School type not set';
@@ -158,6 +163,76 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
     setPreviewCsv(prepareCSV(key));
     setPreviewKey(key);
     setPreviewOpen(true);
+  };
+
+  const fetchDevices = async () => {
+    setLoadingDevices(true);
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      try {
+        const { data: sessionData } = await supabase?.auth?.getSession?.() || {};
+        const token = sessionData?.session?.access_token || sessionData?.access_token || '';
+        if (token) headers.Authorization = `Bearer ${token}`;
+      } catch (e) {
+        // ignore
+      }
+      const res = await fetch('/api/devices', { headers });
+      const json = await res.json();
+      if (json.ok) setDevices(json.devices || []);
+    } catch (e) {
+      // ignore
+    }
+    setLoadingDevices(false);
+  };
+
+  const removeDevice = async (token) => {
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      try {
+        const { data: sessionData } = await supabase?.auth?.getSession?.() || {};
+        const at = sessionData?.session?.access_token || sessionData?.access_token || '';
+        if (at) headers.Authorization = `Bearer ${at}`;
+      } catch (e) {
+        // ignore
+      }
+      await fetch('/api/devices', { method: 'DELETE', headers, body: JSON.stringify({ token }) });
+      setDevices((d) => d.filter((it) => it.token !== token));
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const exportSelected = () => {
+    if (!selectedTokens.length) return;
+    const selected = devices.filter((d) => selectedTokens.includes(d.token));
+    const rows = ['email,role,token,addedAt'];
+    selected.forEach((d) => {
+      rows.push(`"${(d.email||'').replace(/"/g,'""')}","${(d.role||'').replace(/"/g,'""')}","${(d.token||'')}","${d.addedAt||''}"`);
+    });
+    const content = rows.join('\n');
+    downloadFile(`devices-${new Date().toISOString().slice(0,10)}.csv`, content, 'text/csv');
+  };
+
+  const removeSelected = async () => {
+    if (!selectedTokens.length) return;
+    if (!confirm(`Remove ${selectedTokens.length} device(s)? This cannot be undone.`)) return;
+    const headersBase = { 'Content-Type': 'application/json' };
+    try {
+      try {
+        const { data: sessionData } = await supabase?.auth?.getSession?.() || {};
+        const at = sessionData?.session?.access_token || sessionData?.access_token || '';
+        if (at) headersBase.Authorization = `Bearer ${at}`;
+      } catch (e) {
+        // ignore
+      }
+
+      // Use bulk-delete endpoint when available for efficiency
+      await fetch('/api/devices/bulk', { method: 'POST', headers: headersBase, body: JSON.stringify({ tokens: selectedTokens }) });
+      setDevices((d) => d.filter((it) => !selectedTokens.includes(it.token)));
+      setSelectedTokens([]);
+    } catch (e) {
+      // ignore
+    }
   };
 
   const serverExportMock = (reportKey) => {
@@ -637,9 +712,32 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
               </article>
             </section>
 
-            <section className="sectionHeader">
-              <h2>Quick Actions</h2>
-              <button className="smallBtn" type="button" onClick={() => openSheet('announcement')}>Publish Notice</button>
+            <section className="sectionHeader quickActionsHeader">
+              <div className="sectionHeaderCopy">
+                <h2>Quick Actions</h2>
+              </div>
+              <div className="quickActionsControls">
+                <button className="smallBtn" type="button" onClick={() => openSheet('announcement')}>Publish Notice</button>
+                <div className="quickActionsCompose">
+                  <input className="quickActionInput" placeholder="Title" value={announceForm.title} onChange={(e) => setAnnounceForm({ ...announceForm, title: e.target.value })} />
+                  <select className="quickActionSelect" value={announceForm.audience} onChange={(e) => setAnnounceForm({ ...announceForm, audience: e.target.value })}>
+                    <option>All</option>
+                    <option>Parent</option>
+                    <option>Teacher</option>
+                    <option>Guard</option>
+                    <option>Admin</option>
+                  </select>
+                  <button className="smallBtn quickActionSend" type="button" onClick={() => {
+                    if (!announceForm.title || !announceForm.body) {
+                      // open the announcement sheet for full compose if missing
+                      openSheet('announcement');
+                      return;
+                    }
+                    actions.addAnnouncement({ title: announceForm.title, audience: announceForm.audience, body: announceForm.body, priority: announceForm.priority });
+                    setAnnounceForm({ title: '', audience: 'All', body: '', priority: 'Normal' });
+                  }}>Send</button>
+                </div>
+              </div>
             </section>
 
             <section className="workflowList">
@@ -710,6 +808,47 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                 </article>
               ))}
               {!activity.length && <p className="emptyText">No recent notifications yet.</p>}
+            </section>
+            <section className="sectionHeader" style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <h2 style={{ margin: 0 }}>Registered Devices</h2>
+                <div style={{ fontSize: 12, color: '#6b7280' }}>{devices.length} device(s) registered</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <input type="checkbox" checked={selectedTokens.length === devices.length && devices.length > 0} onChange={(e) => {
+                    if (e.target.checked) setSelectedTokens(devices.map((d) => d.token));
+                    else setSelectedTokens([]);
+                  }} />
+                  <span style={{ fontSize: 13 }}>Select all</span>
+                </label>
+                <button className="smallBtn" type="button" onClick={() => exportSelected()} disabled={!selectedTokens.length}>Export</button>
+                <button className="smallBtn" type="button" onClick={() => removeSelected()} disabled={!selectedTokens.length}>Remove selected</button>
+                <button className="smallBtn" type="button" onClick={() => fetchDevices()}>Refresh</button>
+              </div>
+            </section>
+            <section className="activityList">
+              {loadingDevices && <p>Loading devices...</p>}
+              {!loadingDevices && devices.length === 0 && <p className="emptyText">No registered devices.</p>}
+              {!loadingDevices && devices.map((d) => (
+                <article key={d.token} className="activityItem">
+                  <div className="activityBody" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+                      <input type="checkbox" checked={selectedTokens.includes(d.token)} onChange={(e) => {
+                        if (e.target.checked) setSelectedTokens((s) => Array.from(new Set([...s, d.token])));
+                        else setSelectedTokens((s) => s.filter((t) => t !== d.token));
+                      }} />
+                      <div>
+                        <div style={{ fontWeight: 700 }}>{d.email || 'Unknown'}</div>
+                        <div style={{ fontSize: 12, color: '#6b7280' }}>{d.role || 'Unknown role'} • Added {d.addedAt ? new Date(d.addedAt).toLocaleString() : 'unknown'}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <button className="smallBtn" type="button" onClick={() => removeDevice(d.token)}>Remove</button>
+                    </div>
+                  </div>
+                </article>
+              ))}
             </section>
             <section className="sectionHeader">
               <h2>Lost & Found — Claims</h2>
