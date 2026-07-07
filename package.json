@@ -27,8 +27,9 @@
     }
   },
   "scripts": {
-    "start": "vite --host 0.0.0.0 --port 5174",
-    "dev": "vite --host 0.0.0.0 --port 5174",
+    "start": "node scripts/dev.mjs",
+    "dev": "node scripts/dev.mjs",
+    "vite:dev": "vite --host 0.0.0.0 --port 5174",
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0 --port 5174",
     "test:e2e": "playwright test",

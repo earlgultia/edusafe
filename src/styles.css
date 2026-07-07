@@ -3417,48 +3417,48 @@ nav.fixed { height: 74px; }
 
 .authHeaderCard,
 .authFormCard {
-  padding: 16px;
+  padding: 6px;
   border: 1px solid #dbe5e1;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #fff;
-  box-shadow: 0 12px 30px rgba(15, 31, 42, 0.08);
+  box-shadow: 0 3px 10px rgba(15, 31, 42, 0.06);
 }
 
 .authHeaderCard {
   color: #0f4d47;
   background: linear-gradient(145deg, #ecfbf7, #d8efe2 60%, #f7fcf8);
-  box-shadow: 0 16px 36px rgba(15, 77, 71, 0.12);
+  box-shadow: 0 6px 14px rgba(15, 77, 71, 0.1);
 }
 
 .authHeaderCopy {
-  margin-top: 16px;
+  margin-top: 4px;
 }
 
 .authHeaderCopy span {
   display: inline-flex;
-  margin-bottom: 8px;
-  padding: 5px 8px;
+  margin-bottom: 3px;
+  padding: 2px 5px;
   border-radius: 999px;
   background: rgba(15, 77, 71, 0.1);
   font-size: 0.7rem;
   color: #0f4d47;
   font-weight: 900;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
 }
 
 .authHeaderCopy h1 {
   margin: 0;
-  font-size: 1.55rem;
-  line-height: 1.08;
-  letter-spacing: -0.03em;
+  font-size: 1.2rem;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
 }
 
 .authHeaderCopy p {
-  margin: 10px 0 0;
+  margin: 3px 0 0;
   color: #194d44;
   font-size: 0.9rem;
-  line-height: 1.5;
+  line-height: 1.3;
 }
 
 .backChip {
@@ -3473,27 +3473,27 @@ nav.fixed { height: 74px; }
 
 .authFormCard {
   display: grid;
-  gap: 12px;
+  gap: 8px;
 }
 
 .authField {
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .authField span {
   color: #475569;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-weight: 800;
 }
 
 .authInputWrap {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 0 12px;
+  gap: 8px;
+  padding: 0 10px;
   border: 1px solid rgba(15, 77, 71, 0.15);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #f1fbf6;
 }
 
@@ -3612,6 +3612,25 @@ nav.fixed { height: 74px; }
 
   .roleModalGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 700px) {
+  .authHeaderCard {
+    padding: 8px 10px;
+  }
+
+  .authHeaderCopy {
+    margin-top: 4px;
+  }
+
+  .authHeaderCopy h1 {
+    font-size: 0.95rem;
+  }
+
+  .authHeaderCopy p {
+    font-size: 0.72rem;
+    line-height: 1.2;
   }
 }
 

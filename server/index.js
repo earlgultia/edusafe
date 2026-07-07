@@ -3,17 +3,19 @@ import cors from 'cors';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 const app = express();
 const port = process.env.PORT || 4000;
+const serverRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)));
 
 app.use(cors());
 app.use(express.json());
 
-const uploadsDir = path.join(process.cwd(), 'server', 'uploads');
+const uploadsDir = path.join(serverRoot, 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const dataFile = path.join(process.cwd(), 'server', 'data.json');
+const dataFile = path.join(serverRoot, 'data.json');
 let db = { lostFound: [], pushLog: [] };
 if (fs.existsSync(dataFile)) {
   try { db = JSON.parse(fs.readFileSync(dataFile)); } catch (e) { db = { lostFound: [], pushLog: [] }; }
