@@ -1,3 +1,4 @@
+import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
@@ -31,5 +32,35 @@ describe('Parent dashboard', () => {
     fireEvent.click(screen.getByRole('button', { name: /submit claim/i }));
 
     expect(actions.claimLostItem).toHaveBeenCalledWith('item1', 'Parent One', '0917-111-2222');
+  });
+
+  it('shows only guardian-linked students for a parent account', () => {
+    const actions = {};
+
+    render(
+      <ParentDashboard
+        data={{
+          students: [
+            { id: 's1', name: 'Ana Cruz' },
+            { id: 's2', name: 'Ben Santos' }
+          ],
+          guardians: [
+            { id: 'g1', name: 'Parent One', email: 'parent1@example.com', studentId: 's2' }
+          ]
+        }}
+        userName="Parent One"
+        auth={{ email: 'parent1@example.com', fullName: 'Parent One' }}
+        setAuth={vi.fn()}
+        setSheet={vi.fn()}
+        actions={actions}
+      />
+    );
+
+    // The select should only include the linked student (s2) when a guardian match exists
+    const select = screen.getByRole('combobox', { name: /switch child profile/i }) || screen.getByRole('combobox');
+    expect(select).toBeInTheDocument();
+    // options should include only one student name from the visible list
+    expect(select.querySelectorAll('option').length).toBe(1);
+    expect(screen.getByText('Ben Santos')).toBeInTheDocument();
   });
 });

@@ -506,7 +506,17 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                     <h3>{incident.type}</h3>
                     <p>{incident.student}</p>
                   </div>
-                  <span>{incident.status || 'Open'}</span>
+                  <div>
+                    <span>{incident.status || 'Open'}</span>
+                    {actions && actions.removeIncident && (incident.status === 'Resolved' || incident.status === 'Closed') && (
+                      <button className="smallBtn" type="button" onClick={() => {
+                        if (confirm('Remove this incident report?')) {
+                          actions.removeIncident(incident.id);
+                          if (window.showToast) window.showToast('Incident report removed');
+                        }
+                      }}>Remove</button>
+                    )}
+                  </div>
                 </article>
               ))}
               {!(data.visitors || []).length && !(data.incidents || []).length && <p className="emptyText">No safety logs yet.</p>}
@@ -557,9 +567,15 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
 
             <section className="sectionHeader">
               <h2>Export options</h2>
-              <div>
-                <button className="smallBtn" type="button" onClick={() => exportReport('monthlyAttendance', 'pdf')}>PDF</button>
-                <button className="smallBtn" type="button" onClick={() => exportReport('monthlyAttendance', 'excel')}>Excel</button>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                <button className="smallBtn" type="button" onClick={() => openPreview('monthlyAttendance', 'Monthly Attendance - PDF Export')} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>picture_as_pdf</span>
+                  PDF
+                </button>
+                <button className="smallBtn" type="button" onClick={() => openPreview('monthlyAttendance', 'Monthly Attendance - Excel Export')} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span className="material-symbols-outlined" style={{ fontSize: '18px' }}>table_chart</span>
+                  Excel
+                </button>
               </div>
             </section>
           </section>
@@ -850,6 +866,33 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                 </article>
               ))}
             </section>
+            <section className="sectionHeader">
+              <h2>Active Emergency Alerts</h2>
+              <p className="sectionNote">Manage school-wide emergency notifications.</p>
+            </section>
+            <div className="featureList">
+              {(data.emergency || []).map((alert) => (
+                <article key={alert.id} className="reportRow">
+                  <div>
+                    <h3>{alert.title || 'Emergency Alert'}</h3>
+                    <p>{alert.message || alert.body || 'Alert notification'}</p>
+                    {alert.time && <small>{new Date(alert.time).toLocaleString()}</small>}
+                  </div>
+                  <div>
+                    {actions && actions.removeEmergency && (
+                      <button className="smallBtn" type="button" onClick={() => {
+                        if (confirm('Remove this emergency alert?')) {
+                          actions.removeEmergency(alert.id);
+                          if (window.showToast) window.showToast('Emergency alert removed');
+                        }
+                      }}>Remove</button>
+                    )}
+                  </div>
+                </article>
+              ))}
+              {!(data.emergency || []).length && <p className="emptyText">No active emergency alerts.</p>}
+            </div>
+
             <section className="sectionHeader">
               <h2>Lost & Found — Claims</h2>
               <p className="sectionNote">Review claims and verify returned items.</p>

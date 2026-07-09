@@ -3,9 +3,34 @@ import { AdminDashboard } from './AdminDashboard.jsx';
 import { ParentDashboard } from './ParentDashboard.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 
-function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setSheet, actions, signOut }) {
+function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = {}, setSheet, actions, signOut }) {
   const [activeTab, setActiveTab] = useState('attendance');
-  const students = data.students || [];
+  const teacher = useMemo(() => {
+    const normalizedTeacherEmail = String(auth?.email || '').trim().toLowerCase();
+    const normalizedTeacherName = String(userName || '').trim().toLowerCase();
+    return (data.teachers || []).find((teacherProfile) => {
+      const teacherEmail = String(teacherProfile.email || '').trim().toLowerCase();
+      const teacherName = String(teacherProfile.name || '').trim().toLowerCase();
+      return (teacherEmail && teacherEmail === normalizedTeacherEmail) || (teacherName && teacherName === normalizedTeacherName);
+    });
+  }, [data.teachers, auth?.email, userName]);
+
+  const students = useMemo(() => {
+    const allStudents = data.students || [];
+    if (!teacher?.grade && !teacher?.section) return allStudents;
+
+    const teacherGrade = String(teacher?.grade || '').trim().toLowerCase();
+    const teacherSection = String(teacher?.section || '').trim().toLowerCase();
+
+    return allStudents.filter((student) => {
+      const studentGrade = String(student.grade || '').trim().toLowerCase();
+      const studentSection = String(student.section || '').trim().toLowerCase();
+      if (teacherGrade && studentGrade !== teacherGrade) return false;
+      if (teacherSection && studentSection !== teacherSection) return false;
+      return true;
+    });
+  }, [data.students, teacher]);
+
   const announcements = data.announcements || [];
   const incidents = data.incidents || [];
   const forms = data.forms || [];
@@ -178,13 +203,26 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', setShee
                       <p>{guardian.relation} for {student?.name || 'Unknown student'}</p>
                       <small>{guardian.qr}</small>
                     </div>
-                    <button
-                      className={guardian.verified ? 'smallBtn' : 'smallBtn disabled'}
-                      type="button"
-                      onClick={() => { if (guardian.verified) { actions.releaseStudent(guardian.id); setActiveTab('home'); } }}
-                    >
-                      {guardian.verified ? 'Release' : 'Denied'}
-                    </button>
+                    <div className="verifyActions">
+                      <button
+                        className="smallBtn"
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Remove guardian verification for "${guardian.name}"?`)) {
+                            actions.removeGuardian?.(guardian.id);
+                          }
+                        }}
+                      >
+                        Remove
+                      </button>
+                      <button
+                        className={guardian.verified ? 'smallBtn' : 'smallBtn disabled'}
+                        type="button"
+                        onClick={() => { if (guardian.verified) { actions.releaseStudent?.(guardian.id); setActiveTab('home'); } }}
+                      >
+                        {guardian.verified ? 'Release' : 'Denied'}
+                      </button>
+                    </div>
                   </article>
                 );
               })}
@@ -676,7 +714,7 @@ function RoleDashboard({ role, data, stats, userName, auth, setAuth, setSheet, s
 
   switch (normalizedRole) {
     case 'teacher':
-      return <TeacherDashboard data={data} stats={stats} userName={userName} setSheet={setSheet} signOut={signOut} actions={actions} />;
+      return <TeacherDashboard data={data} stats={stats} userName={userName} auth={auth} setSheet={setSheet} signOut={signOut} actions={actions} />;
     case 'parent':
       return <ParentDashboard data={data} userName={userName} auth={auth} setAuth={setAuth} setSheet={setSheet} signOut={signOut} actions={actions} />;
     case 'guard':

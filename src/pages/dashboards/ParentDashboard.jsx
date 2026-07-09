@@ -11,12 +11,38 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileDraft, setProfileDraft] = useState({ fullName: auth.fullName || userName, email: auth.email || '' });
-  const announcements = data.announcements || [];
   const students = data.students || [];
-  const defaultStudentId = students[0] ? String(students[0].id) : '';
-  const currentStudentId = selectedStudentId || defaultStudentId;
-  const selectedStudent = students.find((child) => String(child.id) === currentStudentId) || {};
   const guardians = data.guardians || [];
+  
+  // determine which students are linked to this authenticated guardian (parent)
+  const guardianStudentIds = new Set(
+    (guardians || [])
+      .filter((g) => {
+        if (!g) return false;
+        // match by guardian email, id, or name to the current auth record
+        if (auth?.email && g.email && String(g.email).toLowerCase() === String(auth.email).toLowerCase()) return true;
+        if (auth?.id && g.id && String(g.id) === String(auth.id)) return true;
+        if (auth?.fullName && g.name && String(g.name) === String(auth.fullName)) return true;
+        return false;
+      })
+      .map((g) => g.studentId)
+      .filter(Boolean)
+  );
+
+  // students visible to the signed-in parent: use guardian-linked students if present,
+  // otherwise fall back to the full roster to avoid empty UI on admin/dev environments
+  const visibleStudents = guardianStudentIds.size > 0 ? students.filter((s) => guardianStudentIds.has(s.id)) : students;
+  
+  // filter announcements and notifications to only those for linked students or broadcast to all parents
+  const filteredAnnouncements = (data.announcements || []).filter((a) => {
+    // show if no studentId specified (broadcast) or if studentId matches one of parent's linked students
+    if (!a.studentId) return true;
+    return visibleStudents.some((s) => s.id === a.studentId);
+  });
+  const announcements = filteredAnnouncements;
+  const defaultStudentId = visibleStudents[0] ? String(visibleStudents[0].id) : '';
+  const currentStudentId = selectedStudentId || defaultStudentId;
+  const selectedStudent = visibleStudents.find((child) => String(child.id) === currentStudentId) || {};
   const childGuardians = guardians.filter((guardian) => guardian.studentId === selectedStudent.id);
   const attendanceLog = data.attendanceLog || [];
   const studentAttendance = attendanceLog.filter((entry) => entry.studentId === selectedStudent.id);
@@ -33,7 +59,7 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
     ? `${present} present · ${absent} absent · ${late} late · ${excused} excused`
     : 'Attendance data not available yet';
   const pendingForms = data.forms ? data.forms.reduce((sum, form) => sum + Math.max(form.total - form.submitted, 0), 0) : 0;
-  const hasMultipleChildren = students.length > 1;
+  const hasMultipleChildren = visibleStudents.length > 1;
   const openSheet = (sheet) => setSheet?.(sheet);
   const dateLabel = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
@@ -89,7 +115,7 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                 <div>
                   <p className="sectionLabel">Switch child profile</p>
                   <select className="childSelect" value={currentStudentId} onChange={(event) => setSelectedStudentId(event.target.value)}>
-                    {students.map((child) => (
+                    {visibleStudents.map((child) => (
                       <option key={child.id} value={child.id}>{child.name}</option>
                     ))}
                   </select>

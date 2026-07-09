@@ -9,6 +9,7 @@
     "@vitejs/plugin-react": "latest",
     "lucide-react": "latest",
     "node-fetch": "^3.3.2",
+    "nodemailer": "^6.9.3",
     "qrcode": "latest",
     "react": "latest",
     "react-dom": "latest",

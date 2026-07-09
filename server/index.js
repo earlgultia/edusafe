@@ -96,6 +96,84 @@ app.post('/api/lostfound/:id/claim', (req, res) => {
   res.json({ ok: true, item, push });
 });
 
+// Simple password reset flow for development: send code, verify, reset
+if (!db.passwordResets) db.passwordResets = [];
+
+app.post('/api/auth/send-reset', (req, res) => {
+  const { email } = req.body || {};
+  if (!email || !String(email).includes('@')) return res.status(400).json({ ok: false, error: 'Invalid email' });
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+  db.passwordResets = db.passwordResets.filter((r) => r.email !== String(email).toLowerCase());
+  db.passwordResets.push({ email: String(email).toLowerCase(), code, expiresAt, used: false });
+  saveDb();
+  // If SMTP is configured, attempt to send the code via email.
+  const SMTP_HOST = process.env.SMTP_HOST || '';
+  const SMTP_PORT = process.env.SMTP_PORT || '';
+  const SMTP_USER = process.env.SMTP_USER || '';
+  const SMTP_PASS = process.env.SMTP_PASS || '';
+  const SMTP_FROM = process.env.SMTP_FROM || `no-reply@${req.hostname || 'edusafe.local'}`;
+
+  if (SMTP_HOST && SMTP_USER && SMTP_PASS) {
+    (async () => {
+      try {
+        const nodemailer = await import('nodemailer');
+        const transporter = nodemailer.createTransport({
+          host: SMTP_HOST,
+          port: Number(SMTP_PORT) || 587,
+          secure: String(process.env.SMTP_SECURE || '') === 'true',
+          auth: { user: SMTP_USER, pass: SMTP_PASS }
+        });
+
+        const info = await transporter.sendMail({
+          from: SMTP_FROM,
+          to: email,
+          subject: 'EduSafe password reset code',
+          text: `Your EduSafe password reset code is: ${code}`
+        });
+
+        console.log('Password reset email sent:', info?.messageId || info);
+      } catch (e) {
+        console.error('Failed to send password reset email', e);
+      }
+    })();
+
+    // In production do not return the code; still respond ok.
+    res.json({ ok: true });
+    return;
+  }
+
+  // Fallback for dev: log and return debug code.
+  console.log(`Password reset code for ${email}: ${code}`);
+  res.json({ ok: true, debugCode: process.env.NODE_ENV === 'production' ? undefined : code });
+});
+
+app.post('/api/auth/verify-reset', (req, res) => {
+  const { email, code } = req.body || {};
+  if (!email || !code) return res.status(400).json({ ok: false, error: 'Missing fields' });
+  const record = (db.passwordResets || []).find((r) => r.email === String(email).toLowerCase() && !r.used);
+  if (!record) return res.status(400).json({ ok: false, error: 'No reset requested' });
+  if (Date.now() > record.expiresAt) return res.status(400).json({ ok: false, error: 'Code expired' });
+  if (String(code).trim() !== String(record.code).trim()) return res.status(400).json({ ok: false, error: 'Invalid code' });
+  record.verified = true;
+  saveDb();
+  res.json({ ok: true });
+});
+
+app.post('/api/auth/reset-password', (req, res) => {
+  const { email, code, newPassword } = req.body || {};
+  if (!email || !code || !newPassword) return res.status(400).json({ ok: false, error: 'Missing fields' });
+  const record = (db.passwordResets || []).find((r) => r.email === String(email).toLowerCase() && !r.used);
+  if (!record) return res.status(400).json({ ok: false, error: 'No reset requested' });
+  if (Date.now() > record.expiresAt) return res.status(400).json({ ok: false, error: 'Code expired' });
+  if (String(code).trim() !== String(record.code).trim()) return res.status(400).json({ ok: false, error: 'Invalid code' });
+  // Mark used
+  record.used = true;
+  saveDb();
+  // In a real backend you'd update the user's password; here we just acknowledge success
+  res.json({ ok: true });
+});
+
 // Register a device token for push notifications
 app.post('/api/registerDevice', (req, res) => {
   const { token, email, role } = req.body || {};

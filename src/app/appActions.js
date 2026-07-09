@@ -33,22 +33,27 @@ function createAppActions(setData) {
       guardians: (d.guardians || []).filter((guardian) => guardian.id !== id)
     })),
     updateSchool: (school) => setData((d) => ({ ...d, school: { ...d.school, ...school } })),
-    markAttendance: (id, status) => setData((d) => ({
-      ...d,
-      attendanceLog: [{
-        id: Date.now(),
-        studentId: id,
-        student: (d.students || []).find((s) => s.id === id)?.name || 'Student',
-        status,
-        time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-        date: 'Today'
-      }, ...(d.attendanceLog || [])],
-      students: (d.students || []).map((s) => (s.id === id ? { ...s, status } : s)),
-      announcements: status === 'Absent'
-        ? [{ id: Date.now(), title: 'Attendance Alert', audience: 'Parent', body: `${(d.students || []).find((s) => s.id === id)?.name} was marked absent today.`, priority: 'High' }, ...(d.announcements || [])]
-        : (d.announcements || []),
-      notifications: [{ id: Date.now(), type: 'attendance', title: `${(d.students || []).find((s) => s.id === id)?.name} marked ${status}`, body: `${(d.students || []).find((s) => s.id === id)?.name} was marked ${status}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
-    })),
+    markAttendance: (id, status) => setData((d) => {
+      const student = (d.students || []).find((s) => s.id === id);
+      const linkedGuardians = (d.guardians || []).filter((g) => g.studentId === id);
+      const linkedGuardianIds = linkedGuardians.map((g) => g.id);
+      return {
+        ...d,
+        attendanceLog: [{
+          id: Date.now(),
+          studentId: id,
+          student: student?.name || 'Student',
+          status,
+          time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+          date: 'Today'
+        }, ...(d.attendanceLog || [])],
+        students: (d.students || []).map((s) => (s.id === id ? { ...s, status } : s)),
+        announcements: status === 'Absent'
+          ? [{ id: Date.now(), title: 'Attendance Alert', audience: 'Parent', studentId: id, guardianIds: linkedGuardianIds, body: `${student?.name} was marked absent today.`, priority: 'High' }, ...(d.announcements || [])]
+          : (d.announcements || []),
+        notifications: [{ id: Date.now(), type: 'attendance', studentId: id, guardianIds: linkedGuardianIds, title: `${student?.name} marked ${status}`, body: `${student?.name} was marked ${status}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+      };
+    }),
     releaseStudent: (guardianId) => setData((d) => {
       const guardian = (d.guardians || []).find((g) => g.id === guardianId);
       if (!guardian?.verified) return d;
@@ -65,14 +70,28 @@ function createAppActions(setData) {
           date: 'Today'
         }, ...(d.pickupLog || [])],
         students: (d.students || []).map((s) => (s.id === guardian.studentId ? { ...s, release: 'Released' } : s)),
-        announcements: [{ id: Date.now(), title: 'Pickup Complete', audience: 'Parent', body: `${guardian.name} picked up ${student?.name}.`, priority: 'Normal' }, ...(d.announcements || [])],
-        notifications: [{ id: Date.now(), type: 'pickup', title: 'Student released', body: `${guardian.name} picked up ${student?.name}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+        announcements: [{ id: Date.now(), title: 'Pickup Complete', audience: 'Parent', studentId: guardian.studentId, body: `${guardian.name} picked up ${student?.name}.`, priority: 'Normal' }, ...(d.announcements || [])],
+        notifications: [{ id: Date.now(), type: 'pickup', title: 'Student released', studentId: guardian.studentId, body: `${guardian.name} picked up ${student?.name}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
       };
     }),
     addVisitor: (visitor) => setData((d) => ({ ...d, visitors: [{ id: Date.now(), status: 'On campus', timeIn: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), timeOut: '', ...visitor }, ...(d.visitors || [])], notifications: [{ id: Date.now(), type: 'visitor', title: 'Visitor arrived', body: `${visitor.name} arrived for ${visitor.purpose || 'a meeting'}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
     checkoutVisitor: (id) => setData((d) => ({ ...d, visitors: (d.visitors || []).map((v) => (v.id === id ? { ...v, status: 'Checked out', timeOut: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } : v)) })),
-    addIncident: (incident) => setData((d) => ({ ...d, incidents: [{ id: Date.now(), status: 'Submitted', ...incident }, ...(d.incidents || [])], notifications: [{ id: Date.now(), type: 'incident', title: 'Incident reported', body: `${incident.student || 'A student'} - ${incident.type}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
-    addClinic: (record) => setData((d) => ({ ...d, clinic: [{ id: Date.now(), ...record }, ...(d.clinic || [])], notifications: [{ id: Date.now(), type: 'clinic', title: 'Clinic visit', body: `${record.student || 'A student'} visited the clinic.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
+    addIncident: (incident) => setData((d) => {
+      const studentId = incident.studentId || (d.students || []).find((s) => s.name === incident.student)?.id;
+      return {
+        ...d,
+        incidents: [{ id: Date.now(), status: 'Submitted', ...incident }, ...(d.incidents || [])],
+        notifications: [{ id: Date.now(), type: 'incident', title: 'Incident reported', studentId, body: `${incident.student || 'A student'} - ${incident.type}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+      };
+    }),
+    addClinic: (record) => setData((d) => {
+      const studentId = record.studentId || (d.students || []).find((s) => s.name === record.student)?.id;
+      return {
+        ...d,
+        clinic: [{ id: Date.now(), ...record }, ...(d.clinic || [])],
+        notifications: [{ id: Date.now(), type: 'clinic', title: 'Clinic visit', studentId, body: `${record.student || 'A student'} visited the clinic.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+      };
+    }),
     addAnnouncement: (announcement) => {
       setData((d) => ({ ...d, announcements: [{ id: Date.now(), ...announcement }, ...(d.announcements || [])], notifications: [{ id: Date.now(), type: 'announcement', title: announcement.title || 'Announcement', body: announcement.body || '', read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] }));
 
@@ -127,6 +146,14 @@ function createAppActions(setData) {
     acknowledgeEmergency: (alertId, user) => setData((d) => ({
       ...d,
       emergencyAcks: [{ id: Date.now(), alertId, user, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.emergencyAcks || [])]
+    })),
+    removeEmergency: (alertId) => setData((d) => ({
+      ...d,
+      emergency: (d.emergency || []).filter((alert) => alert.id !== alertId)
+    })),
+    removeIncident: (incidentId) => setData((d) => ({
+      ...d,
+      incidents: (d.incidents || []).filter((incident) => incident.id !== incidentId)
     })),
     sendPushMock: (payload) => setData((d) => ({
       ...d,

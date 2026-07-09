@@ -35,12 +35,6 @@ function ReportPreview({ open, title, csv, onClose, onDownloadCsv, onPrint, onSe
           <div>
             <strong>{title}</strong>
           </div>
-          <div>
-            <button className="textButton" onClick={onDownloadCsv}>Download CSV</button>
-            <button className="textButton" onClick={onPrint}>Print / Save PDF</button>
-            <button className="textButton" onClick={onServerExport}>Server export (mock)</button>
-            <button className="textButton" onClick={onClose}>Close</button>
-          </div>
         </div>
 
         <div className="reportPreviewBody">
@@ -60,6 +54,26 @@ function ReportPreview({ open, title, csv, onClose, onDownloadCsv, onPrint, onSe
           ) : (
             <pre className="reportPreviewPre">No data available</pre>
           )}
+        </div>
+
+        <div className="reportPreviewFooter">
+          <div className="reportPreviewActions">
+            <button className="reportActionBtn reportDownloadBtn" onClick={onDownloadCsv} title="Download as CSV file">
+              <span className="material-symbols-outlined">download</span>
+              <span>Download CSV</span>
+            </button>
+            <button className="reportActionBtn reportPrintBtn" onClick={onPrint} title="Print or save as PDF">
+              <span className="material-symbols-outlined">print</span>
+              <span>Print / PDF</span>
+            </button>
+            <button className="reportActionBtn reportServerBtn" onClick={onServerExport} title="Server export (mock)">
+              <span className="material-symbols-outlined">cloud_upload</span>
+              <span>Server Export</span>
+            </button>
+          </div>
+          <button className="reportCloseBtn" onClick={onClose}>
+            <span>Close</span>
+          </button>
         </div>
       </div>
     </div>
