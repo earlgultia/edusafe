@@ -328,7 +328,7 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = 
               <h2>Teacher actions</h2>
               <div className="sectionActions">
                 <button className="smallBtn" type="button" onClick={() => openSheet('attendance')}>Mark Attendance</button>
-                <button className="smallBtn" type="button" onClick={() => openSheet('event')}>Add Event</button>
+                <button className="smallBtn" type="button" onClick={() => openSheet('incident')}>Report Incident</button>
                 <button className="smallBtn" type="button" onClick={() => openSheet('lost')}>File Lost Item</button>
               </div>
             </section>

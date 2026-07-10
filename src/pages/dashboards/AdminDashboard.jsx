@@ -734,6 +734,7 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
               </div>
               <div className="quickActionsControls">
                 <button className="smallBtn" type="button" onClick={() => openSheet('announcement')}>Publish Notice</button>
+                <button className="smallBtn" type="button" onClick={() => openSheet('event')}>Add Event</button>
                 <div className="quickActionsCompose">
                   <input className="quickActionInput" placeholder="Title" value={announceForm.title} onChange={(e) => setAnnounceForm({ ...announceForm, title: e.target.value })} />
                   <select className="quickActionSelect" value={announceForm.audience} onChange={(e) => setAnnounceForm({ ...announceForm, audience: e.target.value })}>

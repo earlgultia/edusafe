@@ -98,10 +98,17 @@ function createAppActions(setData) {
     checkoutVisitor: (id) => setData((d) => ({ ...d, visitors: (d.visitors || []).map((v) => (v.id === id ? { ...v, status: 'Checked out', timeOut: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } : v)) })),
     addIncident: (incident) => setData((d) => {
       const studentId = incident.studentId || (d.students || []).find((s) => s.name === incident.student)?.id;
+      const guardianIds = Array.isArray(incident.guardianIds) ? incident.guardianIds : [];
+      const resolvedGuardianIds = incident.notifyAll
+        ? (d.guardians || [])
+            .filter((guardian) => String(guardian.studentId || '') === String(studentId || ''))
+            .map((guardian) => guardian.id)
+        : guardianIds;
+
       return {
         ...d,
-        incidents: [{ id: Date.now(), status: 'Submitted', ...incident }, ...(d.incidents || [])],
-        notifications: [{ id: Date.now(), type: 'incident', title: 'Incident reported', studentId, body: `${incident.student || 'A student'} - ${incident.type}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+        incidents: [{ id: Date.now(), status: 'Submitted', ...incident, studentId, guardianIds: resolvedGuardianIds }, ...(d.incidents || [])],
+        notifications: [{ id: Date.now(), type: 'incident', title: 'Incident reported', studentId, guardianIds: resolvedGuardianIds, body: `${incident.student || 'A student'} - ${incident.type}${resolvedGuardianIds.length ? ` • Notified ${resolvedGuardianIds.length} guardian(s)` : ''}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
       };
     }),
     addClinic: (record) => setData((d) => {
