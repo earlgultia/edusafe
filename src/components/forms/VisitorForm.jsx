@@ -4,7 +4,14 @@ import { FormShell, Field, Select } from '../FormFields.jsx';
 
 function VisitorForm({ close, actions }) {
   const [form, setForm] = useState({ name: '', purpose: '', person: '', contact: '', category: 'Parent', idType: 'Optional' });
-  return <FormShell onSubmit={() => { actions.addVisitor(form); close(); }} submit="Generate QR pass">
+  const handleSubmit = () => {
+    const trimmedName = String(form.name || '').trim();
+    const trimmedContact = String(form.contact || '').trim();
+    if (!trimmedName || !trimmedContact) return;
+    actions.addVisitor({ ...form, name: trimmedName, contact: trimmedContact });
+    close();
+  };
+  return <FormShell onSubmit={handleSubmit} submit="Generate QR pass">
     <div className="photoCard">
       <button className="photoBtn" type="button"><Camera size={18} /> Capture visitor photo</button>
       <p>Take a quick photo, then generate a pass for the visitor.</p>

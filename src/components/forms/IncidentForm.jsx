@@ -9,6 +9,7 @@ function IncidentForm({ close, actions, data }) {
     student: students[0]?.name || '',
     studentId: students[0]?.id || '',
     description: '',
+    severity: 'Medium',
     guardianIds: [],
     notifyAll: false
   });
@@ -39,6 +40,9 @@ function IncidentForm({ close, actions, data }) {
   };
 
   const handleSubmit = () => {
+    const trimmedDescription = String(form.description || '').trim();
+    if (!trimmedDescription || !form.studentId) return;
+
     const resolvedGuardianIds = form.notifyAll
       ? studentGuardians.map((guardian) => guardian.id)
       : form.guardianIds;
@@ -47,7 +51,7 @@ function IncidentForm({ close, actions, data }) {
       type: form.type,
       student: form.student,
       studentId: form.studentId,
-      description: form.description,
+      description: trimmedDescription,
       guardianIds: resolvedGuardianIds,
       notifyAll: form.notifyAll
     });
@@ -80,7 +84,9 @@ function IncidentForm({ close, actions, data }) {
           </div>
         </div>
       )}
+      <Select label="Severity" value={form.severity} options={['Low', 'Medium', 'High', 'Critical']} onChange={(severity) => setForm({ ...form, severity })} />
       <Field label="Description" value={form.description} onChange={(description) => setForm({ ...form, description })} multiline />
+      {!form.description ? <p className="fieldNote">A short description is required for proper incident review and audit.</p> : null}
     </FormShell>
   );
 }

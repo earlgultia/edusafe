@@ -41,6 +41,35 @@ describe('Teacher dashboard', () => {
     expect(await screen.findByRole('button', { name: /report incident/i })).toBeInTheDocument();
   });
 
+  it('shows students linked to the teacher account for attendance without exposing unrelated students', () => {
+    const setSheet = vi.fn();
+    const data = {
+      teachers: [{ id: 't1', name: 'Teacher A', email: 'teacher.a@school.edu.ph' }],
+      students: [
+        { id: 's1', name: 'Linked Student', grade: '', section: '', teacherId: 't1', status: 'Pending' },
+        { id: 's2', name: 'Unlinked Student', grade: '4', section: 'A', teacherId: '', status: 'Pending' }
+      ],
+      announcements: [],
+      incidents: [],
+      forms: [],
+      events: []
+    };
+
+    render(
+      <RoleDashboard
+        role="Teacher"
+        data={data}
+        userName="Teacher A"
+        auth={{ signedIn: true, role: 'Teacher', fullName: 'Teacher A', email: 'teacher.a@school.edu.ph' }}
+        setSheet={setSheet}
+        actions={{ addTeacher: vi.fn() }}
+      />
+    );
+
+    expect(screen.getByText('Linked Student')).toBeInTheDocument();
+    expect(screen.queryByText('Unlinked Student')).not.toBeInTheDocument();
+  });
+
   it('links a newly added student to a teacher in the same grade and section', () => {
     let data = {
       teachers: [{ id: 't1', name: 'Teacher A', grade: '3', section: 'B' }],

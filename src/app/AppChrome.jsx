@@ -1,16 +1,11 @@
 import { LogOut } from 'lucide-react';
 import { today } from '../appContent.js';
+import { getRoleProfile } from '../data/roleConfig.js';
 import { Notifications } from '../components/Notifications.jsx';
 import { Toast } from '../components/Toast.jsx';
 
 function AppChrome({ role, userName, onSignOut, data, actions }) {
-  const title = {
-    Admin: 'Admin Dashboard',
-    Teacher: 'Teacher Workspace',
-    Parent: 'Parent Overview',
-    Guard: 'Guard Console',
-    Nurse: 'Nurse Station'
-  }[role] || 'EduSafe PH';
+  const title = getRoleProfile(role).title;
 
   return (
     <header className="topbar">

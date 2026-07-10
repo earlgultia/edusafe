@@ -14,7 +14,8 @@ const initialData = {
   events: [],
   notifications: [],
   lostFound: [],
-  emergency: []
+  emergency: [],
+  auditLog: []
 };
 
 export { initialData };

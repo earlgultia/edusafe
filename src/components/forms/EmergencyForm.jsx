@@ -8,8 +8,9 @@ function EmergencyForm({ close, actions }) {
   const types = ['Fire', 'Earthquake', 'Flood', 'Intruder', 'Medical Emergency'];
 
   const send = () => {
-    if (!selected) return;
-    actions.triggerEmergency(selected, message);
+    const trimmedMessage = String(message || '').trim();
+    if (!selected || !trimmedMessage) return;
+    actions.triggerEmergency(selected, trimmedMessage);
     close();
   };
 

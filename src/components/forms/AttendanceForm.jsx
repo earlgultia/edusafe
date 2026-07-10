@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { FormShell, Select } from '../FormFields.jsx';
 
 function AttendanceForm({ close, actions, data }) {
-  const students = data.students || [];
+  const students = Array.isArray(data?.students) ? data.students : [];
+  const [feedback, setFeedback] = useState('');
   const gradeOptions = ['All grades', ...new Set(students.map((student) => student.grade).filter(Boolean))];
   const sectionOptions = ['All sections', ...new Set(students.map((student) => student.section).filter(Boolean))];
   const [grade, setGrade] = useState('All grades');
@@ -20,6 +21,7 @@ function AttendanceForm({ close, actions, data }) {
         <Select label="Grade" value={grade} options={gradeOptions} onChange={setGrade} />
         <Select label="Section" value={section} options={sectionOptions} onChange={setSection} />
       </div>
+      {feedback ? <p className="fieldNote">{feedback}</p> : null}
       <div className="attendanceList">
         {filteredStudents.map((student) => (
           <article className="attendanceRow" key={student.id}>
@@ -29,7 +31,11 @@ function AttendanceForm({ close, actions, data }) {
             </div>
             <div className="chips attendanceChips">
               {statuses.map((status) => (
-                <button key={status} type="button" className={student.status === status ? 'selected' : ''} onClick={() => actions.markAttendance(student.id, status)}>{status}</button>
+                <button key={status} type="button" className={student.status === status ? 'selected' : ''} onClick={() => {
+                  if (!student?.id || !actions?.markAttendance) return;
+                  actions.markAttendance(student.id, status);
+                  setFeedback(`${student.name} marked ${status}`);
+                }}>{status}</button>
               ))}
             </div>
           </article>

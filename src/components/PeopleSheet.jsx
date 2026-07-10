@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-function PeopleSheet({ close, data, actions }) {
+function PeopleSheet({ close, data, actions, hideStudentDelete = false }) {
   const [activeTab, setActiveTab] = useState('students');
   const [query, setQuery] = useState('');
   const [guardianFilter, setGuardianFilter] = useState('all');
@@ -122,7 +122,7 @@ function PeopleSheet({ close, data, actions }) {
                   {activeTab === 'teachers' && item.advisory}
                   {activeTab === 'guardians' && (item.verified ? 'Verified' : 'Pending')}
                 </span>
-                {actionMap[activeTab] && (
+                {actionMap[activeTab] && !(activeTab === 'students' && hideStudentDelete) && (
                   <button className="textButton danger" type="button" onClick={() => handleDelete(item)}>
                     Delete
                   </button>

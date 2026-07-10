@@ -19,7 +19,7 @@ function ReleaseForm({ close, actions, data }) {
             <button className="smallBtn" type="button" onClick={() => { if (window.confirm(`Remove guardian verification for "${g.name}"?`)) { actions.removeGuardian?.(g.id); } }}>
               Remove
             </button>
-            <button className={g.verified ? 'smallBtn' : 'smallBtn disabled'} type="button" onClick={() => { actions.releaseStudent?.(g.id); close(); }}>
+            <button className={g.verified ? 'smallBtn' : 'smallBtn disabled'} type="button" onClick={() => { if (!g?.id) return; actions.releaseStudent?.(g.id); close(); }}>
               {g.verified ? 'Release' : 'Denied'}
             </button>
           </div>

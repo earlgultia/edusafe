@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { AdminDashboard } from './AdminDashboard.jsx';
 import { ParentDashboard } from './ParentDashboard.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
+import { getRoleNavigation } from '../../data/roleConfig.js';
 
 function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = {}, setSheet, actions, signOut }) {
   const [activeTab, setActiveTab] = useState('attendance');
@@ -17,19 +18,24 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = 
 
   const students = useMemo(() => {
     const allStudents = data.students || [];
-    if (!teacher?.grade && !teacher?.section) return allStudents;
-
+    const currentTeacherId = String(teacher?.id || '').trim();
     const teacherGrade = String(teacher?.grade || '').trim().toLowerCase();
     const teacherSection = String(teacher?.section || '').trim().toLowerCase();
+    const hasTeacherClass = Boolean(teacherGrade || teacherSection);
 
     return allStudents.filter((student) => {
       const studentTeacherId = String(student.teacherId || '').trim();
-      const currentTeacherId = String(teacher?.id || '').trim();
-      if (currentTeacherId && studentTeacherId && studentTeacherId !== currentTeacherId) return false;
-      if (currentTeacherId && studentTeacherId === currentTeacherId) return true;
-
       const studentGrade = String(student.grade || '').trim().toLowerCase();
       const studentSection = String(student.section || '').trim().toLowerCase();
+
+      if (currentTeacherId && studentTeacherId) {
+        return studentTeacherId === currentTeacherId;
+      }
+
+      if (!hasTeacherClass) {
+        return false;
+      }
+
       if (teacherGrade && studentGrade !== teacherGrade) return false;
       if (teacherSection && studentSection !== teacherSection) return false;
       return true;
@@ -374,38 +380,18 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = 
     }
   };
 
+  const navigation = getRoleNavigation('Teacher');
+
   return (
     <div className="adminPage">
       <main className="adminContent">{renderContent()}</main>
       <nav className="bottomNav">
-        <button className={`navButton ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-          <span className="material-symbols-outlined">home</span>
-          <span>Home</span>
-        </button>
-        <button className={`navButton ${activeTab === 'attendance' ? 'active' : ''}`} onClick={() => setActiveTab('attendance')}>
-          <span className="material-symbols-outlined">check_circle</span>
-          <span>Attendance</span>
-        </button>
-        <button className={`navButton ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
-          <span className="material-symbols-outlined">people</span>
-          <span>People</span>
-        </button>
-        <button className={`navButton ${activeTab === 'events' ? 'active' : ''}`} onClick={() => setActiveTab('events')}>
-          <span className="material-symbols-outlined">event</span>
-          <span>Events</span>
-        </button>
-        <button className={`navButton ${activeTab === 'lost' ? 'active' : ''}`} onClick={() => setActiveTab('lost')}>
-          <span className="material-symbols-outlined">inventory_2</span>
-          <span>Lost</span>
-        </button>
-        <button className={`navButton ${activeTab === 'release' ? 'active' : ''}`} onClick={() => setActiveTab('release')}>
-          <span className="material-symbols-outlined">send</span>
-          <span>Release</span>
-        </button>
-        <button className={`navButton ${activeTab === 'comms' ? 'active' : ''}`} onClick={() => setActiveTab('comms')}>
-          <span className="material-symbols-outlined">chat</span>
-          <span>Comms</span>
-        </button>
+        {navigation.map((item) => (
+          <button key={item.tab} className={`navButton ${activeTab === item.tab ? 'active' : ''}`} onClick={() => setActiveTab(item.tab)}>
+            <span className="material-symbols-outlined">{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
       </nav>
     </div>
   );
@@ -624,18 +610,18 @@ function GuardDashboard({ data = {}, userName = 'Guard', setSheet }) {
     }
   };
 
+  const navigation = getRoleNavigation('Guard');
+
   return (
     <div className="adminPage">
       <main className="adminContent">{renderContent()}</main>
       <nav className="bottomNav">
-        <button className={`navButton ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-          <span className="material-symbols-outlined">home</span>
-          <span>Home</span>
-        </button>
-        <button className={`navButton ${activeTab === 'security' ? 'active' : ''}`} onClick={() => setActiveTab('security')}>
-          <span className="material-symbols-outlined">shield</span>
-          <span>Security</span>
-        </button>
+        {navigation.map((item) => (
+          <button key={item.tab} className={`navButton ${activeTab === item.tab ? 'active' : ''}`} onClick={() => setActiveTab(item.tab)}>
+            <span className="material-symbols-outlined">{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
       </nav>
     </div>
   );
@@ -704,18 +690,18 @@ function NurseDashboard({ data = {}, userName = 'Nurse', setSheet }) {
     }
   };
 
+  const navigation = getRoleNavigation('Nurse');
+
   return (
     <div className="adminPage">
       <main className="adminContent">{renderContent()}</main>
       <nav className="bottomNav">
-        <button className={`navButton ${activeTab === 'home' ? 'active' : ''}`} onClick={() => setActiveTab('home')}>
-          <span className="material-symbols-outlined">home</span>
-          <span>Home</span>
-        </button>
-        <button className={`navButton ${activeTab === 'clinic' ? 'active' : ''}`} onClick={() => setActiveTab('clinic')}>
-          <span className="material-symbols-outlined">local_hospital</span>
-          <span>Clinic</span>
-        </button>
+        {navigation.map((item) => (
+          <button key={item.tab} className={`navButton ${activeTab === item.tab ? 'active' : ''}`} onClick={() => setActiveTab(item.tab)}>
+            <span className="material-symbols-outlined">{item.icon}</span>
+            <span>{item.label}</span>
+          </button>
+        ))}
       </nav>
     </div>
   );

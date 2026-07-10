@@ -1,8 +1,8 @@
+import React, { useState } from 'react';
 import { ActionSheet } from '../components/ActionSheet.jsx';
 import { LogoutSweetAlert } from '../components/LogoutSweetAlert.jsx';
 import { RoleDashboard } from '../pages/dashboards/RoleDashboard.jsx';
 import { AppChrome } from './AppChrome.jsx';
-import { useState } from 'react';
 
 function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, actions, sheet, setSheet }) {
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -27,13 +27,20 @@ function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, act
     const teacherStudents = (data?.students || []).filter((student) => {
       const studentTeacherId = String(student.teacherId || '').trim();
       const currentTeacherId = String(teacher?.id || '').trim();
-      if (currentTeacherId && studentTeacherId && studentTeacherId !== currentTeacherId) return false;
-      if (currentTeacherId && studentTeacherId === currentTeacherId) return true;
-
       const teacherGrade = String(teacher?.grade || '').trim().toLowerCase();
       const teacherSection = String(teacher?.section || '').trim().toLowerCase();
       const studentGrade = String(student.grade || '').trim().toLowerCase();
       const studentSection = String(student.section || '').trim().toLowerCase();
+      const hasTeacherClass = Boolean(teacherGrade || teacherSection);
+
+      if (currentTeacherId && studentTeacherId) {
+        return studentTeacherId === currentTeacherId;
+      }
+
+      if (!hasTeacherClass) {
+        return false;
+      }
+
       if (teacherGrade && studentGrade !== teacherGrade) return false;
       if (teacherSection && studentSection !== teacherSection) return false;
       return true;
@@ -54,7 +61,7 @@ function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, act
       <AppChrome role={role} userName={userName} onSignOut={requestSignOut} data={data} actions={actions} />
 
       <main className="screen">
-        <RoleDashboard role={role} data={data} stats={stats} userName={userName} auth={auth} setAuth={setAuth} setSheet={setSheet} signOut={requestSignOut} actions={actions} />
+        <RoleDashboard role={role} data={sheetData} stats={stats} userName={userName} auth={auth} setAuth={setAuth} setSheet={setSheet} signOut={requestSignOut} actions={actions} />
       </main>
 
       {sheet && <ActionSheet sheet={sheet} close={() => setSheet(null)} data={sheetData} actions={actions} />}

@@ -27,6 +27,8 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
   const clinicVisits = (data.clinic || []).length;
   const pendingPickups = (data.students || []).filter((student) => student.release === 'Waiting').length;
   const verifiedGuardians = (data.guardians || []).filter((guardian) => guardian.verified).length;
+  const auditEntries = (data.auditLog || []).slice(0, 4);
+  const offlineQueueSize = (data.offlineQueue || []).length;
 
   const currentDate = useMemo(
     () => new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' }),
@@ -726,6 +728,14 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
                 <h3>Guardian Pickup Queue</h3>
                 <p>{pendingPickups}</p>
               </article>
+              <article className="summaryCard">
+                <h3>Audit Trail</h3>
+                <p>{auditEntries.length} recent events</p>
+              </article>
+              <article className="summaryCard">
+                <h3>Offline Queue</h3>
+                <p>{offlineQueueSize} pending</p>
+              </article>
             </section>
 
             <section className="sectionHeader quickActionsHeader">
@@ -805,6 +815,19 @@ function AdminDashboard({ data = {}, stats = {}, userName = 'Admin', setSheet, s
             <section className="activityHeader">
               <h2>Recent Notifications</h2>
               <button className="textButton" type="button">View All</button>
+            </section>
+
+            <section className="featureList">
+              {auditEntries.map((entry) => (
+                <article key={entry.id} className="reportRow">
+                  <div>
+                    <h3>{entry.action}</h3>
+                    <p>{entry.details?.reason || 'Recorded'} · {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : 'Unknown'}</p>
+                  </div>
+                  <span>{entry.school || 'School'}</span>
+                </article>
+              ))}
+              {!auditEntries.length && <p className="emptyText">No audit entries yet.</p>}
             </section>
 
             <section className="activityList">

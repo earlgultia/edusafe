@@ -1,6 +1,49 @@
-function createAppActions(setData) {
+import { addBusinessAudit, hasDuplicateAttendance } from './businessLogic.js';
+import { canPerformAction, queueOfflineAction } from './phaseTwoLogic.js';
+
+function isEmergencyCooldownActive(state = {}, type = '') {
+  const recentAlerts = (state.emergency || []).filter((alert) => {
+    const sameType = String(alert.type || '').toLowerCase() === String(type || '').toLowerCase();
+    const createdAt = alert.createdAt || alert.time || '';
+    if (!createdAt || !sameType) return false;
+
+    const created = new Date(createdAt);
+    if (Number.isNaN(created.getTime())) return false;
+
+    const now = new Date();
+    const diffMs = now.getTime() - created.getTime();
+    return diffMs < 5 * 60 * 1000;
+  });
+
+  return recentAlerts.length > 0;
+}
+
+function createAppActions(setData, context = {}) {
+  const withAudit = (state, action, details = {}) => addBusinessAudit(state, action, details);
+  const getSchoolContext = (state) => state.school?.id || state.school?.name || '';
+  const getOfflineStatus = () => {
+    if (typeof navigator === 'undefined') return false;
+    return typeof navigator.onLine === 'boolean' ? !navigator.onLine : false;
+  };
+  const ensurePermission = (state, action, details = {}, auditAction = action) => {
+    const role = context?.role || state?.sessionRole || 'admin';
+    if (canPerformAction(role, action, context)) {
+      return { allowed: true, state };
+    }
+
+    const rejectedState = withAudit(state, auditAction, { ...details, reason: 'forbidden', role });
+    return { allowed: false, state: queueOfflineAction(rejectedState, action, details, { role, offline: getOfflineStatus() }) };
+  };
+
   return {
-    addNotification: (note) => setData((d) => ({ ...d, notifications: [{ id: Date.now(), read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), ...note }, ...(d.notifications || [])] })),
+    addNotification: (note) => setData((d) => {
+      const next = {
+        ...d,
+        notifications: [{ id: Date.now(), read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), ...note }, ...(d.notifications || [])]
+      };
+
+      return withAudit(next, 'addNotification', { noteTitle: note?.title || 'Notification' });
+    }),
     markNotificationRead: (id) => setData((d) => ({ ...d, notifications: (d.notifications || []).map((n) => (n.id === id ? { ...n, read: true } : n)) })),
     addStudent: (student) => setData((d) => {
       const studentId = String(student.lrn || Date.now());
@@ -16,28 +59,45 @@ function createAppActions(setData) {
         return Boolean(teacherGrade || teacherSection || studentGrade || studentSection);
       });
 
-      return {
+      const next = {
         ...d,
         students: [{
           id: studentId,
           ...student,
           release: 'Waiting',
-          teacherId: matchingTeacher?.id || student.teacherId || ''
+          teacherId: matchingTeacher?.id || student.teacherId || '',
+          schoolId: getSchoolContext(d)
         }, ...(d.students || [])]
       };
+
+      return withAudit(next, 'addStudent', { studentId, studentName: student.name || studentId });
     }),
-    addTeacher: (teacher) => setData((d) => ({ ...d, teachers: [{ id: Date.now(), ...teacher }, ...(d.teachers || [])] })),
+    addTeacher: (teacher) => setData((d) => {
+      const next = {
+        ...d,
+        teachers: [{ id: Date.now(), ...teacher, schoolId: getSchoolContext(d) }, ...(d.teachers || [])]
+      };
+
+      return withAudit(next, 'addTeacher', { teacherId: teacher.id || 'new-teacher' });
+    }),
     addGuardian: (guardian) => setData((d) => {
-      const normalizedStudentId = String(guardian.studentId || '');
-      return {
+      const normalizedStudentId = String(guardian.studentId || '').trim();
+      const guardianName = String(guardian.name || '').trim();
+      const fallbackLabel = guardianName ? guardianName.split(/\s+/)[0].toUpperCase() : 'GDN';
+      const next = {
         ...d,
         guardians: [{
           id: Date.now(),
-          qr: `GDN-${guardian.name.split(' ')[0].toUpperCase()}-${normalizedStudentId}-${Date.now()}`,
+          qr: `GDN-${fallbackLabel}-${normalizedStudentId}-${Date.now()}`,
           ...guardian,
-          studentId: normalizedStudentId
+          name: guardianName || 'Guardian',
+          studentId: normalizedStudentId,
+          verified: Boolean(guardian.verified),
+          schoolId: getSchoolContext(d)
         }, ...(d.guardians || [])]
       };
+
+      return withAudit(next, 'addGuardian', { studentId: normalizedStudentId, guardianName: guardianName || 'Guardian' });
     }),
     removeStudent: (id) => setData((d) => ({
       ...d,
@@ -54,10 +114,20 @@ function createAppActions(setData) {
     })),
     updateSchool: (school) => setData((d) => ({ ...d, school: { ...d.school, ...school } })),
     markAttendance: (id, status) => setData((d) => {
+      const permissionCheck = ensurePermission(d, 'attendance', { studentId: id, status });
+      if (!permissionCheck.allowed) {
+        return permissionCheck.state;
+      }
+
       const student = (d.students || []).find((s) => s.id === id);
       const linkedGuardians = (d.guardians || []).filter((g) => g.studentId === id);
       const linkedGuardianIds = linkedGuardians.map((g) => g.id);
-      return {
+
+      if (hasDuplicateAttendance(d, id, 'Today')) {
+        return withAudit(d, 'markAttendance', { studentId: id, status, rejected: true, reason: 'duplicate_attendance' });
+      }
+
+      const next = {
         ...d,
         attendanceLog: [{
           id: Date.now(),
@@ -65,7 +135,8 @@ function createAppActions(setData) {
           student: student?.name || 'Student',
           status,
           time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-          date: 'Today'
+          date: 'Today',
+          schoolId: getSchoolContext(d)
         }, ...(d.attendanceLog || [])],
         students: (d.students || []).map((s) => (s.id === id ? { ...s, status } : s)),
         announcements: status === 'Absent'
@@ -73,12 +144,19 @@ function createAppActions(setData) {
           : (d.announcements || []),
         notifications: [{ id: Date.now(), type: 'attendance', studentId: id, guardianIds: linkedGuardianIds, title: `${student?.name} marked ${status}`, body: `${student?.name} was marked ${status}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
       };
+
+      return withAudit(next, 'markAttendance', { studentId: id, status, rejected: false });
     }),
     releaseStudent: (guardianId) => setData((d) => {
+      const permissionCheck = ensurePermission(d, 'pickup', { guardianId }, 'releaseStudent');
+      if (!permissionCheck.allowed) {
+        return permissionCheck.state;
+      }
+
       const guardian = (d.guardians || []).find((g) => g.id === guardianId);
       if (!guardian?.verified) return d;
       const student = (d.students || []).find((s) => s.id === guardian.studentId);
-      return {
+      const next = {
         ...d,
         pickupLog: [{
           id: Date.now(),
@@ -87,16 +165,43 @@ function createAppActions(setData) {
           guardian: guardian.name,
           status: 'Released',
           time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-          date: 'Today'
+          date: 'Today',
+          schoolId: getSchoolContext(d)
         }, ...(d.pickupLog || [])],
         students: (d.students || []).map((s) => (s.id === guardian.studentId ? { ...s, release: 'Released' } : s)),
         announcements: [{ id: Date.now(), title: 'Pickup Complete', audience: 'Parent', studentId: guardian.studentId, body: `${guardian.name} picked up ${student?.name}.`, priority: 'Normal' }, ...(d.announcements || [])],
         notifications: [{ id: Date.now(), type: 'pickup', title: 'Student released', studentId: guardian.studentId, body: `${guardian.name} picked up ${student?.name}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
       };
+
+      return withAudit(next, 'releaseStudent', { guardianId, studentId: guardian.studentId });
     }),
-    addVisitor: (visitor) => setData((d) => ({ ...d, visitors: [{ id: Date.now(), status: 'On campus', timeIn: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), timeOut: '', ...visitor }, ...(d.visitors || [])], notifications: [{ id: Date.now(), type: 'visitor', title: 'Visitor arrived', body: `${visitor.name} arrived for ${visitor.purpose || 'a meeting'}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
-    checkoutVisitor: (id) => setData((d) => ({ ...d, visitors: (d.visitors || []).map((v) => (v.id === id ? { ...v, status: 'Checked out', timeOut: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } : v)) })),
+    addVisitor: (visitor) => setData((d) => {
+      const next = {
+        ...d,
+        visitors: [{ id: Date.now(), status: 'On campus', timeIn: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), timeOut: '', ...visitor, schoolId: getSchoolContext(d) }, ...(d.visitors || [])],
+        notifications: [{ id: Date.now(), type: 'visitor', title: 'Visitor arrived', body: `${visitor.name} arrived for ${visitor.purpose || 'a meeting'}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+      };
+      return withAudit(next, 'addVisitor', { visitorName: visitor.name || 'Visitor' });
+    }),
+    checkoutVisitor: (id) => setData((d) => {
+      const permissionCheck = ensurePermission(d, 'visitor', { visitorId: id }, 'checkoutVisitor');
+      if (!permissionCheck.allowed) {
+        return permissionCheck.state;
+      }
+
+      const next = {
+        ...d,
+        visitors: (d.visitors || []).map((v) => (v.id === id ? { ...v, status: 'Checked out', timeOut: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } : v))
+      };
+
+      return withAudit(next, 'checkoutVisitor', { visitorId: id });
+    }),
     addIncident: (incident) => setData((d) => {
+      const permissionCheck = ensurePermission(d, 'incident', { incidentType: incident.type || 'incident' }, 'addIncident');
+      if (!permissionCheck.allowed) {
+        return permissionCheck.state;
+      }
+
       const studentId = incident.studentId || (d.students || []).find((s) => s.name === incident.student)?.id;
       const guardianIds = Array.isArray(incident.guardianIds) ? incident.guardianIds : [];
       const resolvedGuardianIds = incident.notifyAll
@@ -104,23 +209,37 @@ function createAppActions(setData) {
             .filter((guardian) => String(guardian.studentId || '') === String(studentId || ''))
             .map((guardian) => guardian.id)
         : guardianIds;
+      const severity = String(incident.severity || 'Medium').toLowerCase();
+      const status = severity === 'critical' ? 'Pending Review' : 'Submitted';
 
-      return {
+      const next = {
         ...d,
-        incidents: [{ id: Date.now(), status: 'Submitted', ...incident, studentId, guardianIds: resolvedGuardianIds }, ...(d.incidents || [])],
+        incidents: [{ id: Date.now(), status, ...incident, studentId, guardianIds: resolvedGuardianIds, schoolId: getSchoolContext(d) }, ...(d.incidents || [])],
         notifications: [{ id: Date.now(), type: 'incident', title: 'Incident reported', studentId, guardianIds: resolvedGuardianIds, body: `${incident.student || 'A student'} - ${incident.type}${resolvedGuardianIds.length ? ` • Notified ${resolvedGuardianIds.length} guardian(s)` : ''}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
       };
+
+      return withAudit(next, 'addIncident', { studentId, incidentType: incident.type || 'incident', severity, status });
     }),
     addClinic: (record) => setData((d) => {
       const studentId = record.studentId || (d.students || []).find((s) => s.name === record.student)?.id;
-      return {
+      const next = {
         ...d,
-        clinic: [{ id: Date.now(), ...record }, ...(d.clinic || [])],
+        clinic: [{ id: Date.now(), ...record, schoolId: getSchoolContext(d) }, ...(d.clinic || [])],
         notifications: [{ id: Date.now(), type: 'clinic', title: 'Clinic visit', studentId, body: `${record.student || 'A student'} visited the clinic.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
       };
+
+      return withAudit(next, 'addClinic', { studentId, reason: record.reason || 'clinic-visit' });
     }),
     addAnnouncement: (announcement) => {
-      setData((d) => ({ ...d, announcements: [{ id: Date.now(), ...announcement }, ...(d.announcements || [])], notifications: [{ id: Date.now(), type: 'announcement', title: announcement.title || 'Announcement', body: announcement.body || '', read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] }));
+      setData((d) => {
+        const next = {
+          ...d,
+          announcements: [{ id: Date.now(), ...announcement, schoolId: getSchoolContext(d) }, ...(d.announcements || [])],
+          notifications: [{ id: Date.now(), type: 'announcement', title: announcement.title || 'Announcement', body: announcement.body || '', read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+        };
+
+        return withAudit(next, 'addAnnouncement', { audience: announcement.audience || 'All' });
+      });
 
       // Best-effort: notify backend to push to the audience
       (async () => {
@@ -141,7 +260,10 @@ function createAppActions(setData) {
         }
       })();
     },
-    addEvent: (event) => setData((d) => ({ ...d, events: [{ id: Date.now(), ...event }, ...(d.events || [])], notifications: [{ id: Date.now(), type: 'event', title: event.title || 'Event', body: `${event.title} on ${event.date}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] })),
+    addEvent: (event) => setData((d) => {
+      const next = { ...d, events: [{ id: Date.now(), ...event, schoolId: getSchoolContext(d) }, ...(d.events || [])], notifications: [{ id: Date.now(), type: 'event', title: event.title || 'Event', body: `${event.title} on ${event.date}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])] };
+      return withAudit(next, 'addEvent', { eventTitle: event.title || 'Event' });
+    }),
     addLostFound: (item) => setData((d) => ({
       ...d,
       lostFound: [{ id: Date.now(), status: 'Found', ...item }, ...(d.lostFound || [])],
@@ -162,18 +284,35 @@ function createAppActions(setData) {
       lostFound: (d.lostFound || []).map((it) => (it.id === itemId ? { ...it, status: 'Returned', returnedBy: verifier, returnedAt: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } : it)),
       notifications: [{ id: Date.now(), type: 'lost', title: `Returned: ${itemId}`, body: `Item ${itemId} marked returned by ${verifier}`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
     })),
-    triggerEmergency: (type, message = 'Follow school safety instructions immediately.') => setData((d) => ({
-      ...d,
-      emergency: [{ id: Date.now(), type, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), message }, ...(d.emergency || [])],
-      announcements: [{ id: Date.now() + 1, title: `${type} Emergency Alert`, audience: 'All', body: message, priority: 'Critical' }, ...(d.announcements || [])],
-      notifications: [{ id: Date.now(), type: 'emergency', title: `${type} Emergency`, body: message, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])],
-      pushLog: [{ id: Date.now(), payload: { channel: 'all', title: `${type} Emergency`, body: message }, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.pushLog || [])]
-    }))
-    ,
-    acknowledgeEmergency: (alertId, user) => setData((d) => ({
-      ...d,
-      emergencyAcks: [{ id: Date.now(), alertId, user, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.emergencyAcks || [])]
-    })),
+    triggerEmergency: (type, message = 'Follow school safety instructions immediately.') => setData((d) => {
+      const permissionCheck = ensurePermission(d, 'emergency', { emergencyType: type }, 'triggerEmergency');
+      if (!permissionCheck.allowed) {
+        return permissionCheck.state;
+      }
+
+      if (isEmergencyCooldownActive(d, type)) {
+        const cooldownState = withAudit(d, 'triggerEmergency', { emergencyType: type, reason: 'cooldown' });
+        return queueOfflineAction(cooldownState, 'triggerEmergency', { emergencyType: type, message }, { role: context?.role || d?.sessionRole || 'admin', offline: getOfflineStatus() });
+      }
+
+      const next = {
+        ...d,
+        emergency: [{ id: Date.now(), type, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }), message, createdAt: new Date().toISOString() }, ...(d.emergency || [])],
+        announcements: [{ id: Date.now() + 1, title: `${type} Emergency Alert`, audience: 'All', body: message, priority: 'Critical' }, ...(d.announcements || [])],
+        notifications: [{ id: Date.now(), type: 'emergency', title: `${type} Emergency`, body: message, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])],
+        pushLog: [{ id: Date.now(), payload: { channel: 'all', title: `${type} Emergency`, body: message }, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.pushLog || [])]
+      };
+
+      return withAudit(next, 'triggerEmergency', { emergencyType: type });
+    }),
+    acknowledgeEmergency: (alertId, user) => setData((d) => {
+      const next = {
+        ...d,
+        emergencyAcks: [{ id: Date.now(), alertId, user, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.emergencyAcks || [])]
+      };
+
+      return withAudit(next, 'acknowledgeEmergency', { alertId, user });
+    }),
     removeEmergency: (alertId) => setData((d) => ({
       ...d,
       emergency: (d.emergency || []).filter((alert) => alert.id !== alertId)

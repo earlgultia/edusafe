@@ -16,6 +16,20 @@ function GuardianForm({ close, actions, data }) {
     emergencyContact: ''
   });
 
+  const handleSubmit = () => {
+    const trimmedName = String(form.name || '').trim();
+    const trimmedPhone = String(form.phone || '').trim();
+    if (!trimmedName || !hasStudents) return;
+    const payload = {
+      ...form,
+      name: trimmedName,
+      phone: trimmedPhone,
+      studentId: String(form.studentId || '').trim()
+    };
+    actions.addGuardian(payload);
+    close();
+  };
+
   const handlePhotoChange = (event) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -30,15 +44,12 @@ function GuardianForm({ close, actions, data }) {
 
   return (
     <FormShell
-      onSubmit={() => {
-        if (!hasStudents) return;
-        actions.addGuardian(form);
-        close();
-      }}
+      onSubmit={handleSubmit}
       submit="Save guardian"
       submitDisabled={!hasStudents}
     >
       <Field label="Guardian name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+      {!form.name ? <p className="fieldNote">Guardian name is required for pickup verification.</p> : null}
       <label className="field">
         <span>Photo</span>
         <input type="file" accept="image/*" onChange={handlePhotoChange} />
@@ -61,6 +72,7 @@ function GuardianForm({ close, actions, data }) {
         onChange={(studentId) => setForm({ ...form, studentId: parseStudentId(studentId.split(':')[0]) })}
       />
       <Select label="Verification" value={form.verified ? 'Verified' : 'Pending'} options={['Verified', 'Pending']} onChange={(verified) => setForm({ ...form, verified: verified === 'Verified' })} />
+      {!form.phone ? <p className="fieldNote">Phone is recommended for emergency and pickup coordination.</p> : null}
       {!hasStudents && <p className="fieldNote">Add a student first before assigning a guardian.</p>}
     </FormShell>
   );

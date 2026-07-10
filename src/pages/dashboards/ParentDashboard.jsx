@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { CalendarView } from '../../components/CalendarView.jsx';
+import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 
 function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = () => {}, setSheet, signOut, actions }) {
   const [activeTab, setActiveTab] = useState('home');
@@ -7,6 +8,7 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
   const [claimItem, setClaimItem] = useState(null);
   const [claimContact, setClaimContact] = useState('');
   const [claimantName, setClaimantName] = useState(userName);
+  const [claimError, setClaimError] = useState('');
   const [previewImage, setPreviewImage] = useState(null);
   const [selectedStudentId, setSelectedStudentId] = useState('');
   const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -29,9 +31,10 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
       .filter(Boolean)
   );
 
-  // students visible to the signed-in parent: use guardian-linked students if present,
-  // otherwise fall back to the full roster to avoid empty UI on admin/dev environments
-  const visibleStudents = guardianStudentIds.size > 0 ? students.filter((s) => guardianStudentIds.has(s.id)) : students;
+  const linkedStudentIds = Array.from(guardianStudentIds).filter((studentId) => students.some((student) => String(student.id) === String(studentId)));
+
+  // students visible to the signed-in parent: only students explicitly linked through a guardian record
+  const visibleStudents = students.filter((s) => linkedStudentIds.includes(String(s.id)));
   
   // filter announcements and notifications to only those for linked students or broadcast to all parents
   const filteredAnnouncements = (data.announcements || []).filter((a) => {
@@ -59,8 +62,65 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
     ? `${present} present · ${absent} absent · ${late} late · ${excused} excused`
     : 'Attendance data not available yet';
   const pendingForms = data.forms ? data.forms.reduce((sum, form) => sum + Math.max(form.total - form.submitted, 0), 0) : 0;
-  const hasMultipleChildren = visibleStudents.length > 1;
+  const auditEntries = (data.auditLog || []).slice(0, 3);
+  const offlineQueueSize = (data.offlineQueue || []).length;
+  const showChildSelector = visibleStudents.length > 0;
+  useEffect(() => {
+    if (!visibleStudents.length) {
+      setSelectedStudentId('');
+      return;
+    }
+
+    const currentSelectionExists = visibleStudents.some((student) => String(student.id) === String(selectedStudentId));
+    if (!currentSelectionExists) {
+      setSelectedStudentId(String(visibleStudents[0].id));
+    }
+  }, [selectedStudentId, visibleStudents]);
   const openSheet = (sheet) => setSheet?.(sheet);
+  const openClaimSheet = (item) => {
+    setClaimItem(item);
+    setClaimContact('');
+    setClaimantName(userName || '');
+    setClaimError('');
+    setClaimOpen(true);
+  };
+  const handleClaimSubmit = async () => {
+    const trimmedName = String(claimantName || '').trim();
+    const trimmedContact = String(claimContact || '').trim();
+
+    if (!trimmedName) {
+      setClaimError('Please enter your name so staff can verify the claim.');
+      return;
+    }
+
+    if (!trimmedContact) {
+      setClaimError('Please add a phone number or email so staff can reach you.');
+      return;
+    }
+
+    setClaimError('');
+
+    if (actions && actions.claimLostItem) {
+      actions.claimLostItem(claimItem.id, trimmedName, trimmedContact);
+    }
+
+    try {
+      const res = await fetch(`/api/lostfound/${claimItem.id}/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claimant: trimmedName, contact: trimmedContact })
+      });
+      if (res.ok) {
+        if (window.showToast) window.showToast('Claim submitted');
+      } else if (window.showToast) {
+        window.showToast('Claim submitted (local)');
+      }
+    } catch (e) {
+      if (window.showToast) window.showToast('Claim submitted (local)');
+    }
+
+    setClaimOpen(false);
+  };
   const dateLabel = new Date().toLocaleDateString('en-US', {
     weekday: 'short',
     month: 'short',
@@ -110,11 +170,11 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
               </div>
             </section>
 
-            {hasMultipleChildren && (
+            {showChildSelector && (
               <section className="sectionHeader">
                 <div>
                   <p className="sectionLabel">Switch child profile</p>
-                  <select className="childSelect" value={currentStudentId} onChange={(event) => setSelectedStudentId(event.target.value)}>
+                  <select className="childSelect" aria-label="Switch child profile" value={currentStudentId} onChange={(event) => setSelectedStudentId(event.target.value)}>
                     {visibleStudents.map((child) => (
                       <option key={child.id} value={child.id}>{child.name}</option>
                     ))}
@@ -159,7 +219,7 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                   <small>Check upcoming events and school days.</small>
                 </div>
               </button>
-              <button type="button" className="actionCard" onClick={() => setActiveTab('lostFound')}>
+              <button type="button" className="actionCard" aria-label="Open lost and found details" onClick={() => setActiveTab('lostFound')}>
                 <span className="material-symbols-outlined">inventory</span>
                 <div>
                   <strong>Lost & Found</strong>
@@ -188,6 +248,14 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
               <article className="featureCard">
                 <h3>Digital forms</h3>
                 <p>{pendingForms} pending</p>
+              </article>
+              <article className="featureCard">
+                <h3>Audit trail</h3>
+                <p>{auditEntries.length} visible entries</p>
+              </article>
+              <article className="featureCard">
+                <h3>Offline queue</h3>
+                <p>{offlineQueueSize} pending</p>
               </article>
             </section>
 
@@ -280,6 +348,18 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
             <section className="sectionHeader">
               <h2>Emergency alerts</h2>
             </section>
+            <section className="featureList">
+              {auditEntries.map((entry) => (
+                <article key={entry.id} className="reportRow">
+                  <div>
+                    <h3>{entry.action}</h3>
+                    <p>{entry.details?.reason || 'Record updated'} · {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : 'Unknown'}</p>
+                  </div>
+                  <span>Recorded</span>
+                </article>
+              ))}
+              {!auditEntries.length && <p className="emptyText">No audit entries to display.</p>}
+            </section>
             <div className="featureList">
               {emergencyAlerts.slice(0, 3).map((alert) => (
                 <article key={alert.id} className="reportRow">
@@ -314,7 +394,7 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                   </div>
                   <div style={{display: 'flex', flexDirection: 'column', gap: 6}}>
                     <span>{it.status}</span>
-                    {it.status !== 'Returned' && <button className="smallBtn" type="button" onClick={() => { setClaimItem(it); setClaimContact(''); setClaimantName(userName); setClaimOpen(true); }}>Claim</button>}
+                    {it.status !== 'Returned' && <button className="smallBtn" type="button" onClick={() => openClaimSheet(it)}>Claim</button>}
                   </div>
                 </article>
               ))}
@@ -333,29 +413,15 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                     <p><strong>{claimItem.item || claimItem.description}</strong></p>
                     <label>
                       Your name
-                      <input value={claimantName} onChange={(e) => setClaimantName(e.target.value)} />
+                      <input value={claimantName} onChange={(e) => setClaimantName(e.target.value)} autoComplete="name" required />
                     </label>
                     <label>
                       Contact (phone / email)
-                      <input value={claimContact} onChange={(e) => setClaimContact(e.target.value)} placeholder="Phone or email" />
+                      <input value={claimContact} onChange={(e) => setClaimContact(e.target.value)} placeholder="Phone or email" autoComplete="email" required />
                     </label>
+                    {claimError ? <p className="authFeedback">{claimError}</p> : null}
                     <div className="actionRow">
-                      <button className="smallBtn" type="button" onClick={async () => {
-                        try {
-                          const res = await fetch(`/api/lostfound/${claimItem.id}/claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ claimant: claimantName, contact: claimContact }) });
-                          if (res.ok) {
-                            if (actions && actions.claimLostItem) actions.claimLostItem(claimItem.id, claimantName, claimContact);
-                            if (window.showToast) window.showToast('Claim submitted');
-                          } else {
-                            if (actions && actions.claimLostItem) actions.claimLostItem(claimItem.id, claimantName, claimContact);
-                            if (window.showToast) window.showToast('Claim submitted (local)');
-                          }
-                        } catch (e) {
-                          if (actions && actions.claimLostItem) actions.claimLostItem(claimItem.id, claimantName, claimContact);
-                          if (window.showToast) window.showToast('Claim submitted (local)');
-                        }
-                        setClaimOpen(false);
-                      }}>Submit claim</button>
+                      <button className="smallBtn" type="button" onClick={handleClaimSubmit}>Submit claim</button>
                       <button className="textButton" type="button" onClick={() => setClaimOpen(false)}>Cancel</button>
                     </div>
                   </div>
@@ -402,7 +468,10 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                   </div>
                   <div className="actionRow">
                     <button className="smallBtn" type="button" onClick={() => {
-                      setAuth({ ...auth, fullName: profileDraft.fullName, email: profileDraft.email });
+                      const trimmedName = String(profileDraft.fullName || '').trim();
+                      const trimmedEmail = String(profileDraft.email || '').trim();
+                      if (!trimmedName || !trimmedEmail) return;
+                      setAuth({ ...auth, fullName: trimmedName, email: trimmedEmail });
                       setIsEditingProfile(false);
                     }}>
                       Save profile
@@ -427,6 +496,18 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
             )}
           </section>
         );
+      case 'people':
+        return (
+          <section className="tabPage">
+            <div className="sectionHeader">
+              <div>
+                <h2>Linked student profile</h2>
+                <p className="sectionNote">View your linked child details without student deletion controls.</p>
+              </div>
+            </div>
+            <PeopleSheet data={{ students: visibleStudents, teachers: [], guardians: childGuardians }} actions={actions} hideStudentDelete />
+          </section>
+        );
     }
   };
 
@@ -449,6 +530,10 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
         <button className={`navButton ${activeTab === 'lostFound' ? 'active' : ''}`} onClick={() => setActiveTab('lostFound')}>
           <span className="material-symbols-outlined">inventory</span>
           <span>Lost & Found</span>
+        </button>
+        <button className={`navButton ${activeTab === 'people' ? 'active' : ''}`} onClick={() => setActiveTab('people')}>
+          <span className="material-symbols-outlined">people</span>
+          <span>People</span>
         </button>
         <button className={`navButton ${activeTab === 'profile' ? 'active' : ''}`} onClick={() => setActiveTab('profile')}>
           <span className="material-symbols-outlined">person</span>
