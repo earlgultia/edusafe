@@ -23,6 +23,11 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = 
     const teacherSection = String(teacher?.section || '').trim().toLowerCase();
 
     return allStudents.filter((student) => {
+      const studentTeacherId = String(student.teacherId || '').trim();
+      const currentTeacherId = String(teacher?.id || '').trim();
+      if (currentTeacherId && studentTeacherId && studentTeacherId !== currentTeacherId) return false;
+      if (currentTeacherId && studentTeacherId === currentTeacherId) return true;
+
       const studentGrade = String(student.grade || '').trim().toLowerCase();
       const studentSection = String(student.section || '').trim().toLowerCase();
       if (teacherGrade && studentGrade !== teacherGrade) return false;
@@ -30,6 +35,13 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = 
       return true;
     });
   }, [data.students, teacher]);
+
+  const teacherScopedData = useMemo(() => ({
+    ...data,
+    students,
+    teachers: teacher ? [teacher] : (data.teachers || []),
+    guardians: (data.guardians || []).filter((guardian) => students.some((student) => student.id === guardian.studentId))
+  }), [data, students, teacher]);
 
   const announcements = data.announcements || [];
   const incidents = data.incidents || [];
@@ -126,7 +138,7 @@ function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = 
               <h2>People</h2>
               <button className="smallBtn" type="button" onClick={() => openSheet('teacher')}>Add Teacher</button>
             </div>
-            <PeopleSheet data={data} actions={actions} />
+            <PeopleSheet data={teacherScopedData} actions={actions} />
           </section>
         );
       case 'comms':

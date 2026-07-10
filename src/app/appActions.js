@@ -4,7 +4,27 @@ function createAppActions(setData) {
     markNotificationRead: (id) => setData((d) => ({ ...d, notifications: (d.notifications || []).map((n) => (n.id === id ? { ...n, read: true } : n)) })),
     addStudent: (student) => setData((d) => {
       const studentId = String(student.lrn || Date.now());
-      return { ...d, students: [{ id: studentId, ...student, release: 'Waiting' }, ...(d.students || [])] };
+      const normalize = (value) => String(value || '').trim().toLowerCase();
+      const matchingTeacher = (d.teachers || []).find((teacher) => {
+        const teacherGrade = normalize(teacher.grade);
+        const teacherSection = normalize(teacher.section);
+        const studentGrade = normalize(student.grade);
+        const studentSection = normalize(student.section);
+
+        if (teacherGrade && studentGrade && teacherGrade !== studentGrade) return false;
+        if (teacherSection && studentSection && teacherSection !== studentSection) return false;
+        return Boolean(teacherGrade || teacherSection || studentGrade || studentSection);
+      });
+
+      return {
+        ...d,
+        students: [{
+          id: studentId,
+          ...student,
+          release: 'Waiting',
+          teacherId: matchingTeacher?.id || student.teacherId || ''
+        }, ...(d.students || [])]
+      };
     }),
     addTeacher: (teacher) => setData((d) => ({ ...d, teachers: [{ id: Date.now(), ...teacher }, ...(d.teachers || [])] })),
     addGuardian: (guardian) => setData((d) => {
