@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabaseClient.js';
-import { inferRoleFromAccount } from './authLogic.js';
+import { inferRoleFromAccount, resolveAccountRole } from './authLogic.js';
 
 const ACCOUNT_STORE_KEY = 'edusafe-accounts';
 const KNOWN_ROLES = ['Admin', 'Teacher', 'Parent', 'Guard', 'Nurse'];
@@ -113,7 +113,7 @@ async function syncProfileToSupabase(account = {}, appData = null) {
     const metadata = {
       full_name: String(account.fullName || user.user_metadata?.full_name || '').trim(),
       school_id: String(account.schoolId || user.user_metadata?.school_id || '').trim(),
-      role: normalizeRole(account.role || user.user_metadata?.role || inferRoleFromAccount(String(user?.email || ''), 'Parent'), 'Parent'),
+      role: normalizeRole(resolveAccountRole(account.role || user.user_metadata?.role, String(user?.email || ''), 'Parent'), 'Parent'),
       phone: String(account.phone || user.user_metadata?.phone || '').trim()
     };
 
@@ -171,7 +171,7 @@ async function registerAccount(account) {
     email: normalizedEmail,
     schoolId: normalizedSchoolId,
     password: normalizePassword(account.password),
-    role: normalizeRole(account.role || inferRoleFromAccount(normalizedEmail, 'Parent'), 'Parent'),
+    role: normalizeRole(resolveAccountRole(account.role, normalizedEmail, 'Parent'), 'Parent'),
     phone: String(account.phone || '').trim()
   };
 
@@ -233,7 +233,7 @@ async function authenticateAccount({ schoolId, email, password, fallbackRole = '
   const localPasswordMatches = account && (storedPassword === enteredPassword || trimmedStoredPassword === trimmedEnteredPassword);
 
   if (localPasswordMatches) {
-    const role = normalizeRole(account.role || inferRoleFromAccount(normalizedEmail, fallbackRole) || fallbackRole, fallbackRole);
+    const role = normalizeRole(resolveAccountRole(account.role, normalizedEmail, fallbackRole), fallbackRole);
     const updatedAccount = { ...account, role };
     void syncProfileToSupabase(updatedAccount);
     return { ok: true, role, account: updatedAccount };
@@ -247,7 +247,7 @@ async function authenticateAccount({ schoolId, email, password, fallbackRole = '
       });
 
       if (!remoteResult?.error && remoteResult?.data?.user) {
-        const rawRole = remoteResult.data.user.user_metadata?.role || account?.role || inferRoleFromAccount(normalizedEmail, fallbackRole) || fallbackRole;
+        const rawRole = resolveAccountRole(remoteResult.data.user.user_metadata?.role || account?.role, normalizedEmail, fallbackRole);
         const fallbackAccount = {
           id: remoteResult.data.user.id,
           fullName: remoteResult.data.user.user_metadata?.full_name || normalizedEmail,
@@ -283,7 +283,7 @@ function buildAccountFromSupabaseUser(user, fallbackRole = 'Parent') {
     fullName: user?.user_metadata?.full_name || user?.email || 'User',
     email: user?.email || '',
     schoolId: user?.user_metadata?.school_id || '',
-    role: normalizeRole(user?.user_metadata?.role || inferredRole, fallbackRole),
+    role: normalizeRole(resolveAccountRole(user?.user_metadata?.role, user?.email || '', fallbackRole), fallbackRole),
     phone: user?.user_metadata?.phone || ''
   };
 }

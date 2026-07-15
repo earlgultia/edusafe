@@ -1,12 +1,13 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { PeopleSheet } from '../components/PeopleSheet.jsx';
 
 describe('PeopleSheet', () => {
-  it('hides student delete actions when the view is scoped to a parent-linked student', () => {
-    const removeStudent = vi.fn();
+  it('shows a remove action for parent-linked students and uses the unlink action', () => {
+    const unlinkStudentFromParent = vi.fn();
+    window.confirm = vi.fn(() => true);
 
     render(
       <PeopleSheet
@@ -15,12 +16,14 @@ describe('PeopleSheet', () => {
           teachers: [],
           guardians: []
         }}
-        actions={{ removeStudent }}
+        actions={{ unlinkStudentFromParent }}
+        parentAuth={{ email: 'parent@example.com' }}
         hideStudentDelete
       />
     );
 
     expect(screen.getByText('Student One')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /remove/i }));
+    expect(unlinkStudentFromParent).toHaveBeenCalledWith('s1', { email: 'parent@example.com' });
   });
 });

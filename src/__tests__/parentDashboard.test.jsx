@@ -110,6 +110,44 @@ describe('Parent dashboard', () => {
     expect(screen.getByText('Linked child')).toBeInTheDocument();
   });
 
+  it('shows students linked through parent identifiers stored on the student record', () => {
+    render(
+      <ParentDashboard
+        data={{
+          students: [{ id: 's1', name: 'Ana Cruz', parentId: 'p-123' }],
+          guardians: []
+        }}
+        userName="Parent One"
+        auth={{ id: 'p-123', fullName: 'Parent One' }}
+        setAuth={vi.fn()}
+        setSheet={vi.fn()}
+        actions={{}}
+      />
+    );
+
+    expect(screen.getByRole('combobox', { name: /switch child profile/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ana Cruz' })).toBeInTheDocument();
+  });
+
+  it('shows students linked by guardian phone when no email is present', () => {
+    render(
+      <ParentDashboard
+        data={{
+          students: [{ id: 's1', name: 'Ana Cruz' }],
+          guardians: [{ id: 'g1', studentId: 's1', phone: '09170000000' }]
+        }}
+        userName="Parent One"
+        auth={{ phone: '09170000000' }}
+        setAuth={vi.fn()}
+        setSheet={vi.fn()}
+        actions={{}}
+      />
+    );
+
+    expect(screen.getByRole('combobox', { name: /switch child profile/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Ana Cruz' })).toBeInTheDocument();
+  });
+
   it('does not show a child whose student record has been removed', () => {
     const actions = {};
 
@@ -133,7 +171,27 @@ describe('Parent dashboard', () => {
     expect(screen.getByText('Linked child')).toBeInTheDocument();
   });
 
-  it('does not link a student to another parent account when only the guardian name matches', () => {
+  it('shows attendance records when the teacher stored the student id in a different format', () => {
+    render(
+      <ParentDashboard
+        data={{
+          students: [{ id: 's1', name: 'Ana Cruz' }],
+          guardians: [{ id: 'g1', name: 'Parent One', email: 'parent1@example.com', studentId: 's1' }],
+          attendanceLog: [{ id: 'a1', studentId: 1, student: 'Ana Cruz', status: 'Present', date: 'Today' }]
+        }}
+        userName="Parent One"
+        auth={{ email: 'parent1@example.com', fullName: 'Parent One' }}
+        setAuth={vi.fn()}
+        setSheet={vi.fn()}
+        actions={{}}
+      />
+    );
+
+    expect(screen.getByText(/1 attendance records/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Present/i).length).toBeGreaterThan(0);
+  });
+
+  it('does not link a student to another parent account when the names do not match', () => {
     render(
       <ParentDashboard
         data={{
@@ -146,7 +204,7 @@ describe('Parent dashboard', () => {
           ]
         }}
         userName="Parent One"
-        auth={{ email: 'parent1@example.com', fullName: 'Parent One' }}
+        auth={{ email: 'parent1@example.com', fullName: 'Parent Two' }}
         setAuth={vi.fn()}
         setSheet={vi.fn()}
         actions={{}}
@@ -157,5 +215,28 @@ describe('Parent dashboard', () => {
     expect(screen.queryByRole('option', { name: 'Ben Santos' })).not.toBeInTheDocument();
     expect(screen.queryByRole('combobox', { name: /switch child profile/i })).not.toBeInTheDocument();
     expect(screen.getByText('Linked child')).toBeInTheDocument();
+  });
+
+  it('allows a parent to remove a linked student from their dashboard', () => {
+    const unlinkStudentFromParent = vi.fn();
+    window.confirm = vi.fn(() => true);
+
+    render(
+      <ParentDashboard
+        data={{
+          students: [{ id: 's1', name: 'Ana Cruz' }],
+          guardians: [{ id: 'g1', studentId: 's1', email: 'parent1@example.com' }]
+        }}
+        userName="Parent One"
+        auth={{ email: 'parent1@example.com', fullName: 'Parent One' }}
+        setAuth={vi.fn()}
+        setSheet={vi.fn()}
+        actions={{ unlinkStudentFromParent }}
+      />
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /remove linked student/i }));
+
+    expect(unlinkStudentFromParent).toHaveBeenCalledWith('s1', expect.objectContaining({ email: 'parent1@example.com' }));
   });
 });

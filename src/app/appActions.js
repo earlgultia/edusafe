@@ -54,6 +54,44 @@ function createAppActions(setData, context = {}) {
     const linkedGuardians = (state.guardians || []).filter((guardian) => String(guardian.studentId || '') === String(studentId || ''));
     return linkedGuardians.map((guardian) => guardian.id);
   };
+  const matchesParentLink = (record = {}, auth = {}) => {
+    const authValues = [
+      auth?.email,
+      auth?.id,
+      auth?.userId,
+      auth?.parentId,
+      auth?.guardianId,
+      auth?.phone,
+      auth?.mobile,
+      auth?.contact,
+      auth?.parentPhone,
+      auth?.guardianPhone,
+      auth?.fullName,
+      auth?.name,
+      auth?.userName,
+      auth?.displayName
+    ].filter(Boolean);
+    const recordValues = [
+      record?.email,
+      record?.authId || record?.parentId || record?.userId,
+      record?.id,
+      record?.guardianId,
+      record?.phone,
+      record?.mobile,
+      record?.contact,
+      record?.parentPhone,
+      record?.guardianPhone,
+      record?.name,
+      record?.fullName,
+      record?.parentName,
+      record?.guardianName,
+      record?.parentFullName,
+      record?.guardianFullName,
+      record?.guardian
+    ].filter(Boolean);
+
+    return authValues.some((value) => recordValues.some((candidate) => normalize(value) === normalize(candidate)));
+  };
   const getOfflineStatus = () => {
     if (typeof navigator === 'undefined') return false;
     return typeof navigator.onLine === 'boolean' ? !navigator.onLine : false;
@@ -138,6 +176,38 @@ function createAppActions(setData, context = {}) {
       };
 
       return withAudit(next, 'addGuardian', { studentId: normalizedStudentId, guardianName: guardianName || 'Guardian' });
+    }),
+    unlinkStudentFromParent: (studentId, parentAuth = {}) => setData((d) => {
+      const nextGuardians = (d.guardians || []).filter((guardian) => {
+        const matchesStudent = String(guardian.studentId || '') === String(studentId || '');
+        if (!matchesStudent) return true;
+        return !matchesParentLink(guardian, parentAuth);
+      });
+      const nextStudents = (d.students || []).map((student) => {
+        if (String(student.id) !== String(studentId || '')) return student;
+
+        const studentLinkRecord = {
+          email: student.parentEmail || student.guardianEmail || '',
+          phone: student.parentPhone || student.guardianPhone || '',
+          name: student.parentName || student.guardianName || student.parentFullName || student.guardianFullName || student.guardian || '',
+          id: student.parentId || student.guardianId || student.authId || student.userId || '',
+          parentId: student.parentId || student.guardianId || student.authId || student.userId || '',
+          guardianId: student.parentId || student.guardianId || student.authId || student.userId || ''
+        };
+
+        if (!matchesParentLink(studentLinkRecord, parentAuth)) {
+          return student;
+        }
+
+        const clearedStudent = { ...student };
+        ['parentEmail', 'guardianEmail', 'parentId', 'guardianId', 'parentPhone', 'guardianPhone', 'guardian', 'parentName', 'guardianName', 'parentFullName', 'guardianFullName', 'authId', 'userId'].forEach((field) => {
+          clearedStudent[field] = '';
+        });
+
+        return clearedStudent;
+      });
+
+      return withAudit({ ...d, students: nextStudents, guardians: nextGuardians }, 'unlinkStudentFromParent', { studentId, parentEmail: parentAuth?.email || '' });
     }),
     removeStudent: (id) => setData((d) => ({
       ...d,

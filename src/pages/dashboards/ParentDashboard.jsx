@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { CalendarView } from '../../components/CalendarView.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
+import { getLinkedStudentIds } from '../../app/parentLinking.js';
 
 function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = () => {}, setSheet, signOut, actions }) {
   const [activeTab, setActiveTab] = useState('home');
@@ -15,37 +16,7 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
   const [profileDraft, setProfileDraft] = useState({ fullName: auth.fullName || userName, email: auth.email || '' });
   const students = data.students || [];
   const guardians = data.guardians || [];
-  
-  const normalizeIdentifier = (value) => String(value || '').trim().toLowerCase();
-
-  const isGuardianLinkedToAuth = (guardian) => {
-    if (!guardian) return false;
-
-    const authEmail = normalizeIdentifier(auth?.email);
-    const guardianEmail = normalizeIdentifier(guardian.email);
-    if (authEmail && guardianEmail && authEmail === guardianEmail) return true;
-
-    const authId = normalizeIdentifier(auth?.id);
-    const guardianAuthId = normalizeIdentifier(guardian.authId || guardian.parentId || guardian.userId);
-    if (authId && guardianAuthId && authId === guardianAuthId) return true;
-
-    const guardianRecordId = normalizeIdentifier(guardian.id);
-    const authGuardianId = normalizeIdentifier(auth?.guardianId);
-    if (authGuardianId && guardianRecordId && authGuardianId === guardianRecordId) return true;
-
-    return false;
-  };
-
-  const linkedStudentIds = Array.from(new Set([
-    ...((guardians || []).filter((g) => isGuardianLinkedToAuth(g)).map((g) => String(g.studentId)).filter(Boolean)),
-    ...students
-      .filter((student) => {
-        const studentParentEmail = normalizeIdentifier(student.parentEmail || student.guardianEmail || student.guardian || '');
-        const authEmail = normalizeIdentifier(auth?.email);
-        return Boolean(authEmail && studentParentEmail && authEmail === studentParentEmail);
-      })
-      .map((student) => String(student.id))
-  ])).filter((studentId) => students.some((student) => String(student.id) === String(studentId)));
+  const linkedStudentIds = getLinkedStudentIds(students, guardians, auth);
 
   // students visible to the signed-in parent: only students explicitly linked through a guardian record or assigned parent email
   const visibleStudents = students.filter((s) => linkedStudentIds.includes(String(s.id)));
@@ -62,7 +33,14 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
   const selectedStudent = visibleStudents.find((child) => String(child.id) === currentStudentId) || {};
   const childGuardians = guardians.filter((guardian) => guardian.studentId === selectedStudent.id);
   const attendanceLog = data.attendanceLog || [];
-  const studentAttendance = attendanceLog.filter((entry) => entry.studentId === selectedStudent.id);
+  const studentAttendance = attendanceLog.filter((entry) => {
+    const entryStudentId = String(entry.studentId ?? '');
+    const selectedStudentIdValue = String(selectedStudent.id ?? '');
+    const studentName = String(selectedStudent.name || '').trim().toLowerCase();
+    const entryStudentName = String(entry.student || entry.studentName || '').trim().toLowerCase();
+
+    return entryStudentId === selectedStudentIdValue || entryStudentId === String(selectedStudent.id ?? '').replace(/[^a-z0-9]/gi, '') || entryStudentId === String(selectedStudent.id ?? '').toLowerCase() || (studentName && entryStudentName && studentName === entryStudentName);
+  });
   const pickupHistory = (data.pickupLog || []).filter((entry) => entry.studentId === selectedStudent.id);
   const clinicVisits = (data.clinic || []).filter((entry) => entry.studentId === selectedStudent.id || entry.student === selectedStudent.name);
   const incidentReports = (data.incidents || []).filter((entry) => entry.studentId === selectedStudent.id || entry.student === selectedStudent.name);
@@ -91,6 +69,22 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
     }
   }, [selectedStudentId, visibleStudents]);
   const openSheet = (sheet) => setSheet?.(sheet);
+  const removeLinkedStudent = (studentId) => {
+    const targetStudent = visibleStudents.find((student) => String(student.id) === String(studentId));
+    const studentName = targetStudent?.name || 'this student';
+
+    const confirmed = window.confirm(`Remove ${studentName} from your linked students? This only removes the link from your account.`);
+    if (!confirmed) return;
+
+    if (actions?.unlinkStudentFromParent) {
+      actions.unlinkStudentFromParent(studentId, auth);
+      return;
+    }
+
+    if (actions?.removeStudent) {
+      actions.removeStudent(studentId);
+    }
+  };
   const openClaimSheet = (item) => {
     setClaimItem(item);
     setClaimContact('');
@@ -246,6 +240,16 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
               <article className="featureCard">
                 <h3>{selectedStudent.name || 'Linked child'}</h3>
                 <p>{studentAttendance.length ? `${studentAttendance.length} attendance records` : 'No attendance recorded yet'}</p>
+                {selectedStudent.id && (
+                  <button
+                    type="button"
+                    className="textButton danger"
+                    aria-label="Remove linked student"
+                    onClick={() => removeLinkedStudent(selectedStudent.id)}
+                  >
+                    Remove linked student
+                  </button>
+                )}
               </article>
               <article className="featureCard">
                 <h3>Pickup history</h3>
@@ -519,7 +523,7 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
                 <p className="sectionNote">View your linked child details without student deletion controls.</p>
               </div>
             </div>
-            <PeopleSheet data={{ students: visibleStudents, teachers: [], guardians: childGuardians }} actions={actions} hideStudentDelete />
+            <PeopleSheet data={{ students: visibleStudents, teachers: [], guardians: childGuardians }} actions={actions} hideStudentDelete parentAuth={auth} />
           </section>
         );
     }

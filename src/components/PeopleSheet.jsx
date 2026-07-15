@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 
-function PeopleSheet({ close, data, actions, hideStudentDelete = false }) {
+function PeopleSheet({ close, data, actions, hideStudentDelete = false, parentAuth = {} }) {
   const [activeTab, setActiveTab] = useState('students');
   const [query, setQuery] = useState('');
   const [guardianFilter, setGuardianFilter] = useState('all');
@@ -22,8 +22,16 @@ function PeopleSheet({ close, data, actions, hideStudentDelete = false }) {
   };
 
   const handleDelete = (item) => {
+    if (activeTab === 'students' && hideStudentDelete && actions?.unlinkStudentFromParent) {
+      const confirmed = window.confirm(`Remove ${item.name || 'this student'} from your linked students? This only removes the link from your account.`);
+      if (!confirmed) return;
+      actions.unlinkStudentFromParent(item.id, parentAuth);
+      return;
+    }
+
     const removeFn = actionMap[activeTab];
     if (!removeFn) return;
+
     if (!window.confirm(`Delete ${removeLabel[activeTab]} "${item.name}"? This cannot be undone.`)) return;
     removeFn(item.id);
   };
@@ -122,9 +130,9 @@ function PeopleSheet({ close, data, actions, hideStudentDelete = false }) {
                   {activeTab === 'teachers' && item.advisory}
                   {activeTab === 'guardians' && (item.verified ? 'Verified' : 'Pending')}
                 </span>
-                {actionMap[activeTab] && !(activeTab === 'students' && hideStudentDelete) && (
+                {((activeTab === 'students' && hideStudentDelete && actions?.unlinkStudentFromParent) || actionMap[activeTab]) && (
                   <button className="textButton danger" type="button" onClick={() => handleDelete(item)}>
-                    Delete
+                    {activeTab === 'students' && hideStudentDelete ? 'Remove' : 'Delete'}
                   </button>
                 )}
               </div>

@@ -6,6 +6,8 @@ const ROLE_PATTERNS = [
   { role: 'Parent', regex: /(^|[._@-])(parent|guardian|mother|father|mom|dad)([._@-]|$)/i }
 ];
 
+const KNOWN_ROLES = ['Admin', 'Teacher', 'Parent', 'Guard', 'Nurse'];
+
 const FORBIDDEN_INPUT_PATTERN = /[<>'"`;]/;
 const MAX_INPUT_LENGTH = 160;
 
@@ -35,6 +37,26 @@ function inferRoleFromAccount(email, fallbackRole = 'Parent') {
   }
 
   return 'Parent';
+}
+
+function normalizeRoleValue(role, fallbackRole = 'Parent') {
+  const normalized = String(role || '').trim();
+  const matched = KNOWN_ROLES.find((knownRole) => knownRole.toLowerCase() === normalized.toLowerCase());
+  return matched || fallbackRole || 'Parent';
+}
+
+function resolveAccountRole(accountRole, email, fallbackRole = 'Parent') {
+  const normalizedStoredRole = normalizeRoleValue(accountRole, 'Parent');
+  if (normalizedStoredRole !== 'Parent') {
+    return normalizedStoredRole;
+  }
+
+  const normalizedFallbackRole = normalizeRoleValue(fallbackRole, 'Parent');
+  if (normalizedFallbackRole !== 'Parent') {
+    return normalizedFallbackRole;
+  }
+
+  return inferRoleFromAccount(email, 'Parent');
 }
 
 function validateLoginForm(values) {
@@ -74,4 +96,4 @@ function validateRegisterForm(values) {
   return { ok: true, role, message: '' };
 }
 
-export { inferRoleFromAccount, validateLoginForm, validateRegisterForm };
+export { inferRoleFromAccount, resolveAccountRole, validateLoginForm, validateRegisterForm };

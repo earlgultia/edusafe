@@ -144,6 +144,28 @@ test('accepts a login when the password is entered with surrounding whitespace',
   assert.equal(authenticated.role, 'Parent');
 });
 
+test('prefers the inferred role over a stale stored parent role for teacher-style emails', async () => {
+  const email = `teacher-stale-${Date.now()}@school.edu.ph`;
+  const registered = await registerAccount({
+    fullName: 'Teacher Stale User',
+    email,
+    schoolId: 'ESP-2026-007',
+    password: 'TeacherPass123!',
+    role: 'Parent'
+  });
+
+  assert.equal(registered.ok, true);
+
+  const authenticated = await authenticateAccount({
+    schoolId: 'ESP-2026-007',
+    email,
+    password: 'TeacherPass123!'
+  });
+
+  assert.equal(authenticated.ok, true);
+  assert.equal(authenticated.role, 'Teacher');
+});
+
 test('uses Supabase authentication when a matching account exists remotely', async () => {
   if (!supabase?.auth) {
     return;

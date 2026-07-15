@@ -3,6 +3,7 @@ import { ActionSheet } from '../components/ActionSheet.jsx';
 import { LogoutSweetAlert } from '../components/LogoutSweetAlert.jsx';
 import { RoleDashboard } from '../pages/dashboards/RoleDashboard.jsx';
 import { AppChrome } from './AppChrome.jsx';
+import { getLinkedStudentIds } from './parentLinking.js';
 
 function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, actions, sheet, setSheet }) {
   const [logoutOpen, setLogoutOpen] = useState(false);
@@ -58,15 +59,9 @@ function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, act
       };
     }
 
-    const normalizeIdentifier = (value) => String(value || '').trim().toLowerCase();
-    const parentEmail = normalizeIdentifier(auth?.email);
     const linkedStudents = (data?.students || []).filter((student) => {
-      const studentParentEmail = normalizeIdentifier(student.parentEmail || student.guardianEmail || student.guardian || '');
-      if (parentEmail && studentParentEmail && parentEmail === studentParentEmail) return true;
-      return (data?.guardians || []).some((guardian) => {
-        const guardianEmail = normalizeIdentifier(guardian.email || '');
-        return String(guardian.studentId || '') === String(student.id) && Boolean(parentEmail && guardianEmail && parentEmail === guardianEmail);
-      });
+      const linkedIds = getLinkedStudentIds(data?.students || [], data?.guardians || [], auth);
+      return linkedIds.includes(String(student.id));
     });
     const linkedStudentIds = new Set(linkedStudents.map((student) => String(student.id)));
 

@@ -4,6 +4,7 @@ import { FormShell, Select } from '../FormFields.jsx';
 function AttendanceForm({ close, actions, data }) {
   const students = Array.isArray(data?.students) ? data.students : [];
   const [feedback, setFeedback] = useState('');
+  const [studentStatuses, setStudentStatuses] = useState(() => Object.fromEntries(students.map((student) => [student.id, student.status])));
   const gradeOptions = ['All grades', ...new Set(students.map((student) => student.grade).filter(Boolean))];
   const sectionOptions = ['All sections', ...new Set(students.map((student) => student.section).filter(Boolean))];
   const [grade, setGrade] = useState('All grades');
@@ -31,11 +32,19 @@ function AttendanceForm({ close, actions, data }) {
             </div>
             <div className="chips attendanceChips">
               {statuses.map((status) => (
-                <button key={status} type="button" className={student.status === status ? 'selected' : ''} onClick={() => {
-                  if (!student?.id || !actions?.markAttendance) return;
-                  actions.markAttendance(student.id, status);
-                  setFeedback(`${student.name} marked ${status}`);
-                }}>{status}</button>
+                <button
+                  key={status}
+                  type="button"
+                  className={studentStatuses[student.id] === status ? 'selected' : ''}
+                  onClick={() => {
+                    if (!student?.id || !actions?.markAttendance) return;
+                    actions.markAttendance(student.id, status);
+                    setStudentStatuses((current) => ({ ...current, [student.id]: status }));
+                    setFeedback(`${student.name} marked ${status}`);
+                  }}
+                >
+                  {status}
+                </button>
               ))}
             </div>
           </article>
