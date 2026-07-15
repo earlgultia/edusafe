@@ -73,7 +73,8 @@ describe('Teacher dashboard', () => {
   it('links a newly added student to a teacher in the same grade and section', () => {
     let data = {
       teachers: [{ id: 't1', name: 'Teacher A', grade: '3', section: 'B' }],
-      students: []
+      students: [],
+      guardians: []
     };
 
     const setData = vi.fn((updater) => {
@@ -81,9 +82,11 @@ describe('Teacher dashboard', () => {
     });
 
     const actions = createAppActions(setData);
-    actions.addStudent({ lrn: '1001', name: 'Student 1', grade: '3', section: 'B' });
+    actions.addStudent({ lrn: '1001', name: 'Student 1', grade: '3', section: 'B', guardian: 'parent@example.com' });
 
     expect(data.students[0].teacherId).toBe('t1');
+    expect(data.students[0].parentEmail).toBe('parent@example.com');
+    expect(data.guardians[0].email).toBe('parent@example.com');
   });
 
   it('keeps event creation on the admin dashboard instead of the teacher dashboard', () => {

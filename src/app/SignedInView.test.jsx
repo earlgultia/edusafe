@@ -14,6 +14,12 @@ vi.mock('../pages/dashboards/RoleDashboard.jsx', () => ({
       {(data?.students || []).map((student) => (
         <span key={student.id}>{student.name}</span>
       ))}
+      {(data?.announcements || []).map((announcement) => (
+        <span key={announcement.id}>{announcement.title}</span>
+      ))}
+      {(data?.notifications || []).map((notification) => (
+        <span key={notification.id}>{notification.title}</span>
+      ))}
     </div>
   )
 }));

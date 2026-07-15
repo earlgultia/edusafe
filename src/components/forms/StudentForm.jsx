@@ -3,7 +3,15 @@ import { FormShell } from '../FormFields.jsx';
 
 function StudentForm({ close, actions }) {
   const [form, setForm] = useState({ lrn: '', name: '', grade: '', section: '', gender: '', blood: '', guardian: '', status: '', medical: '' });
-  return <FormShell onSubmit={() => { actions.addStudent(form); close(); }} submit="Save student">
+  const handleSubmit = () => {
+    const parentEmail = String(form.guardian || '').trim();
+    actions.addStudent({
+      ...form,
+      parentEmail: parentEmail.includes('@') ? parentEmail : ''
+    });
+    close();
+  };
+  return <FormShell onSubmit={handleSubmit} submit="Save student">
     <FieldRow label="LRN" value={form.lrn} onChange={(lrn) => setForm({ ...form, lrn })} />
     <FieldRow label="Full name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
     <FieldRow label="Grade" value={form.grade} onChange={(grade) => setForm({ ...form, grade })} />

@@ -16,31 +16,45 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
   const students = data.students || [];
   const guardians = data.guardians || [];
   
-  // determine which students are linked to this authenticated guardian (parent)
-  const guardianStudentIds = new Set(
-    (guardians || [])
-      .filter((g) => {
-        if (!g) return false;
-        // match by guardian email, id, or name to the current auth record
-        if (auth?.email && g.email && String(g.email).toLowerCase() === String(auth.email).toLowerCase()) return true;
-        if (auth?.id && g.id && String(g.id) === String(auth.id)) return true;
-        if (auth?.fullName && g.name && String(g.name) === String(auth.fullName)) return true;
-        return false;
+  const normalizeIdentifier = (value) => String(value || '').trim().toLowerCase();
+
+  const isGuardianLinkedToAuth = (guardian) => {
+    if (!guardian) return false;
+
+    const authEmail = normalizeIdentifier(auth?.email);
+    const guardianEmail = normalizeIdentifier(guardian.email);
+    if (authEmail && guardianEmail && authEmail === guardianEmail) return true;
+
+    const authId = normalizeIdentifier(auth?.id);
+    const guardianAuthId = normalizeIdentifier(guardian.authId || guardian.parentId || guardian.userId);
+    if (authId && guardianAuthId && authId === guardianAuthId) return true;
+
+    const guardianRecordId = normalizeIdentifier(guardian.id);
+    const authGuardianId = normalizeIdentifier(auth?.guardianId);
+    if (authGuardianId && guardianRecordId && authGuardianId === guardianRecordId) return true;
+
+    return false;
+  };
+
+  const linkedStudentIds = Array.from(new Set([
+    ...((guardians || []).filter((g) => isGuardianLinkedToAuth(g)).map((g) => String(g.studentId)).filter(Boolean)),
+    ...students
+      .filter((student) => {
+        const studentParentEmail = normalizeIdentifier(student.parentEmail || student.guardianEmail || student.guardian || '');
+        const authEmail = normalizeIdentifier(auth?.email);
+        return Boolean(authEmail && studentParentEmail && authEmail === studentParentEmail);
       })
-      .map((g) => g.studentId)
-      .filter(Boolean)
-  );
+      .map((student) => String(student.id))
+  ])).filter((studentId) => students.some((student) => String(student.id) === String(studentId)));
 
-  const linkedStudentIds = Array.from(guardianStudentIds).filter((studentId) => students.some((student) => String(student.id) === String(studentId)));
-
-  // students visible to the signed-in parent: only students explicitly linked through a guardian record
+  // students visible to the signed-in parent: only students explicitly linked through a guardian record or assigned parent email
   const visibleStudents = students.filter((s) => linkedStudentIds.includes(String(s.id)));
   
   // filter announcements and notifications to only those for linked students or broadcast to all parents
   const filteredAnnouncements = (data.announcements || []).filter((a) => {
-    // show if no studentId specified (broadcast) or if studentId matches one of parent's linked students
-    if (!a.studentId) return true;
-    return visibleStudents.some((s) => s.id === a.studentId);
+    if (!a.studentId && !Array.isArray(a.studentIds)) return true;
+    const targetStudentIds = Array.isArray(a.studentIds) ? a.studentIds : [a.studentId];
+    return targetStudentIds.some((studentId) => visibleStudents.some((s) => String(s.id) === String(studentId)));
   });
   const announcements = filteredAnnouncements;
   const defaultStudentId = visibleStudents[0] ? String(visibleStudents[0].id) : '';

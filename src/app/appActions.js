@@ -21,6 +21,39 @@ function isEmergencyCooldownActive(state = {}, type = '') {
 function createAppActions(setData, context = {}) {
   const withAudit = (state, action, details = {}) => addBusinessAudit(state, action, details);
   const getSchoolContext = (state) => state.school?.id || state.school?.name || '';
+  const normalize = (value) => String(value || '').trim().toLowerCase();
+  const getTeacherMatch = (state, student) => {
+    const studentGrade = normalize(student.grade);
+    const studentSection = normalize(student.section);
+    const hasClassScope = Boolean(studentGrade || studentSection);
+
+    if (!hasClassScope) {
+      return (state.teachers || []).find((teacher) => {
+        const teacherId = normalize(student.teacherId || teacher.id || '');
+        const explicitTeacherId = normalize(student.teacherId || '');
+        return explicitTeacherId && teacherId && teacherId === explicitTeacherId;
+      }) || null;
+    }
+
+    return (state.teachers || []).find((teacher) => {
+      const teacherGrade = normalize(teacher.grade);
+      const teacherSection = normalize(teacher.section);
+      const teacherId = normalize(student.teacherId || teacher.id || '');
+      const explicitTeacherId = normalize(student.teacherId || '');
+
+      if (explicitTeacherId && teacherId) {
+        return teacherId === explicitTeacherId;
+      }
+
+      if (teacherGrade && studentGrade && teacherGrade !== studentGrade) return false;
+      if (teacherSection && studentSection && teacherSection !== studentSection) return false;
+      return Boolean(teacherGrade || teacherSection || studentGrade || studentSection);
+    }) || null;
+  };
+  const getScopedGuardianIds = (state, studentId) => {
+    const linkedGuardians = (state.guardians || []).filter((guardian) => String(guardian.studentId || '') === String(studentId || ''));
+    return linkedGuardians.map((guardian) => guardian.id);
+  };
   const getOfflineStatus = () => {
     if (typeof navigator === 'undefined') return false;
     return typeof navigator.onLine === 'boolean' ? !navigator.onLine : false;
@@ -47,30 +80,37 @@ function createAppActions(setData, context = {}) {
     markNotificationRead: (id) => setData((d) => ({ ...d, notifications: (d.notifications || []).map((n) => (n.id === id ? { ...n, read: true } : n)) })),
     addStudent: (student) => setData((d) => {
       const studentId = String(student.lrn || Date.now());
-      const normalize = (value) => String(value || '').trim().toLowerCase();
-      const matchingTeacher = (d.teachers || []).find((teacher) => {
-        const teacherGrade = normalize(teacher.grade);
-        const teacherSection = normalize(teacher.section);
-        const studentGrade = normalize(student.grade);
-        const studentSection = normalize(student.section);
-
-        if (teacherGrade && studentGrade && teacherGrade !== studentGrade) return false;
-        if (teacherSection && studentSection && teacherSection !== studentSection) return false;
-        return Boolean(teacherGrade || teacherSection || studentGrade || studentSection);
-      });
-
+      const resolvedTeacher = getTeacherMatch(d, student);
+      const parentEmailValue = String(student.parentEmail || student.guardianEmail || student.guardian || '').trim();
+      const normalizedParentEmail = parentEmailValue.includes('@') ? parentEmailValue : '';
+      const existingGuardian = normalizedParentEmail
+        ? (d.guardians || []).find((guardian) => String(guardian.studentId || '') === studentId && normalize(guardian.email || '') === normalize(normalizedParentEmail))
+        : null;
       const next = {
         ...d,
         students: [{
           id: studentId,
           ...student,
           release: 'Waiting',
-          teacherId: matchingTeacher?.id || student.teacherId || '',
+          teacherId: resolvedTeacher?.id || student.teacherId || '',
+          grade: student.grade || '',
+          section: student.section || '',
+          parentEmail: normalizedParentEmail,
           schoolId: getSchoolContext(d)
-        }, ...(d.students || [])]
+        }, ...(d.students || [])],
+        guardians: normalizedParentEmail && !existingGuardian
+          ? [{
+              id: Date.now(),
+              studentId,
+              name: student.guardian || 'Parent',
+              email: normalizedParentEmail,
+              verified: true,
+              schoolId: getSchoolContext(d)
+            }, ...(d.guardians || [])]
+          : (d.guardians || [])
       };
 
-      return withAudit(next, 'addStudent', { studentId, studentName: student.name || studentId });
+      return withAudit(next, 'addStudent', { studentId, studentName: student.name || studentId, teacherId: resolvedTeacher?.id || '', parentEmail: normalizedParentEmail });
     }),
     addTeacher: (teacher) => setData((d) => {
       const next = {
@@ -120,8 +160,7 @@ function createAppActions(setData, context = {}) {
       }
 
       const student = (d.students || []).find((s) => s.id === id);
-      const linkedGuardians = (d.guardians || []).filter((g) => g.studentId === id);
-      const linkedGuardianIds = linkedGuardians.map((g) => g.id);
+      const linkedGuardianIds = getScopedGuardianIds(d, id);
 
       if (hasDuplicateAttendance(d, id, 'Today')) {
         return withAudit(d, 'markAttendance', { studentId: id, status, rejected: true, reason: 'duplicate_attendance' });
@@ -205,9 +244,7 @@ function createAppActions(setData, context = {}) {
       const studentId = incident.studentId || (d.students || []).find((s) => s.name === incident.student)?.id;
       const guardianIds = Array.isArray(incident.guardianIds) ? incident.guardianIds : [];
       const resolvedGuardianIds = incident.notifyAll
-        ? (d.guardians || [])
-            .filter((guardian) => String(guardian.studentId || '') === String(studentId || ''))
-            .map((guardian) => guardian.id)
+        ? getScopedGuardianIds(d, studentId)
         : guardianIds;
       const severity = String(incident.severity || 'Medium').toLowerCase();
       const status = severity === 'critical' ? 'Pending Review' : 'Submitted';
@@ -232,10 +269,16 @@ function createAppActions(setData, context = {}) {
     }),
     addAnnouncement: (announcement) => {
       setData((d) => {
+        const scopedStudentIds = Array.isArray(announcement.studentIds)
+          ? announcement.studentIds
+          : [];
+        const targetGuardianIds = scopedStudentIds.length
+          ? (d.guardians || []).filter((guardian) => scopedStudentIds.includes(String(guardian.studentId || ''))).map((guardian) => guardian.id)
+          : [];
         const next = {
           ...d,
           announcements: [{ id: Date.now(), ...announcement, schoolId: getSchoolContext(d) }, ...(d.announcements || [])],
-          notifications: [{ id: Date.now(), type: 'announcement', title: announcement.title || 'Announcement', body: announcement.body || '', read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
+          notifications: [{ id: Date.now(), type: 'announcement', title: announcement.title || 'Announcement', body: announcement.body || '', read: false, guardianIds: targetGuardianIds, studentIds: scopedStudentIds, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
         };
 
         return withAudit(next, 'addAnnouncement', { audience: announcement.audience || 'All' });

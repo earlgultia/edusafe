@@ -14,9 +14,11 @@ function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, act
   };
 
   const sheetData = (() => {
-    if (String(role || '').trim().toLowerCase() !== 'teacher') return data;
+    const normalizedRole = String(role || '').trim().toLowerCase();
+    if (normalizedRole !== 'teacher' && normalizedRole !== 'parent') return data;
 
-    const normalizedTeacherEmail = String(auth?.email || '').trim().toLowerCase();
+    if (normalizedRole === 'teacher') {
+      const normalizedTeacherEmail = String(auth?.email || '').trim().toLowerCase();
     const normalizedTeacherName = String(userName || '').trim().toLowerCase();
     const teacher = (data?.teachers || []).find((teacherProfile) => {
       const teacherEmail = String(teacherProfile.email || '').trim().toLowerCase();
@@ -24,35 +26,64 @@ function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, act
       return (teacherEmail && teacherEmail === normalizedTeacherEmail) || (teacherName && teacherName === normalizedTeacherName);
     });
 
-    const teacherStudents = (data?.students || []).filter((student) => {
-      const studentTeacherId = String(student.teacherId || '').trim();
-      const currentTeacherId = String(teacher?.id || '').trim();
-      const teacherGrade = String(teacher?.grade || '').trim().toLowerCase();
-      const teacherSection = String(teacher?.section || '').trim().toLowerCase();
-      const studentGrade = String(student.grade || '').trim().toLowerCase();
-      const studentSection = String(student.section || '').trim().toLowerCase();
-      const hasTeacherClass = Boolean(teacherGrade || teacherSection);
+      const teacherStudents = (data?.students || []).filter((student) => {
+        const studentTeacherId = String(student.teacherId || '').trim();
+        const currentTeacherId = String(teacher?.id || '').trim();
+        const teacherGrade = String(teacher?.grade || '').trim().toLowerCase();
+        const teacherSection = String(teacher?.section || '').trim().toLowerCase();
+        const studentGrade = String(student.grade || '').trim().toLowerCase();
+        const studentSection = String(student.section || '').trim().toLowerCase();
+        const hasTeacherClass = Boolean(teacherGrade || teacherSection);
 
-      if (currentTeacherId && studentTeacherId) {
-        return studentTeacherId === currentTeacherId;
-      }
+        if (currentTeacherId && studentTeacherId) {
+          return studentTeacherId === currentTeacherId;
+        }
 
-      if (!hasTeacherClass) {
-        return false;
-      }
+        if (!hasTeacherClass) {
+          return false;
+        }
 
-      if (teacherGrade && studentGrade !== teacherGrade) return false;
-      if (teacherSection && studentSection !== teacherSection) return false;
-      return true;
+        if (teacherGrade && studentGrade && teacherGrade !== studentGrade) return false;
+        if (teacherSection && studentSection && teacherSection !== teacherSection) return false;
+        return true;
+      });
+
+      const linkedStudentIds = new Set(teacherStudents.map((student) => String(student.id)));
+
+      return {
+        ...data,
+        students: teacherStudents,
+        teachers: teacher ? [teacher] : (data?.teachers || []),
+        guardians: (data?.guardians || []).filter((guardian) => linkedStudentIds.has(String(guardian.studentId || '')))
+      };
+    }
+
+    const normalizeIdentifier = (value) => String(value || '').trim().toLowerCase();
+    const parentEmail = normalizeIdentifier(auth?.email);
+    const linkedStudents = (data?.students || []).filter((student) => {
+      const studentParentEmail = normalizeIdentifier(student.parentEmail || student.guardianEmail || student.guardian || '');
+      if (parentEmail && studentParentEmail && parentEmail === studentParentEmail) return true;
+      return (data?.guardians || []).some((guardian) => {
+        const guardianEmail = normalizeIdentifier(guardian.email || '');
+        return String(guardian.studentId || '') === String(student.id) && Boolean(parentEmail && guardianEmail && parentEmail === guardianEmail);
+      });
     });
-
-    const linkedStudentIds = new Set(teacherStudents.map((student) => String(student.id)));
+    const linkedStudentIds = new Set(linkedStudents.map((student) => String(student.id)));
 
     return {
       ...data,
-      students: teacherStudents,
-      teachers: teacher ? [teacher] : (data?.teachers || []),
-      guardians: (data?.guardians || []).filter((guardian) => linkedStudentIds.has(String(guardian.studentId || '')))
+      students: linkedStudents,
+      guardians: (data?.guardians || []).filter((guardian) => linkedStudentIds.has(String(guardian.studentId || ''))),
+      announcements: (data?.announcements || []).filter((announcement) => {
+        if (!announcement.studentId && !Array.isArray(announcement.studentIds)) return true;
+        const targetIds = Array.isArray(announcement.studentIds) ? announcement.studentIds : [announcement.studentId];
+        return targetIds.some((studentId) => linkedStudentIds.has(String(studentId)));
+      }),
+      notifications: (data?.notifications || []).filter((notification) => {
+        if (!notification.studentId && !Array.isArray(notification.studentIds) && !Array.isArray(notification.guardianIds)) return true;
+        const targetIds = Array.isArray(notification.studentIds) ? notification.studentIds : [notification.studentId];
+        return targetIds.some((studentId) => linkedStudentIds.has(String(studentId)));
+      })
     };
   })();
 

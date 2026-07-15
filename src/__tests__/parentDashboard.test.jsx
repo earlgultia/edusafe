@@ -132,4 +132,30 @@ describe('Parent dashboard', () => {
     expect(screen.queryByRole('combobox', { name: /switch child profile/i })).not.toBeInTheDocument();
     expect(screen.getByText('Linked child')).toBeInTheDocument();
   });
+
+  it('does not link a student to another parent account when only the guardian name matches', () => {
+    render(
+      <ParentDashboard
+        data={{
+          students: [
+            { id: 's1', name: 'Ana Cruz' },
+            { id: 's2', name: 'Ben Santos' }
+          ],
+          guardians: [
+            { id: 'g1', name: 'Parent One', email: 'other@example.com', studentId: 's2' }
+          ]
+        }}
+        userName="Parent One"
+        auth={{ email: 'parent1@example.com', fullName: 'Parent One' }}
+        setAuth={vi.fn()}
+        setSheet={vi.fn()}
+        actions={{}}
+      />
+    );
+
+    expect(screen.queryByText('Ben Santos')).not.toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Ben Santos' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /switch child profile/i })).not.toBeInTheDocument();
+    expect(screen.getByText('Linked child')).toBeInTheDocument();
+  });
 });
