@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { supabase } from '../lib/supabaseClient.js';
-import { authenticateAccount, buildAccountFromSupabaseUser, readAccounts, registerAccount, verifyAccountEmail, writeAccounts } from './authAccounts.js';
+import { authenticateAccount, buildAccountFromSupabaseUser, readAccounts, registerAccount, syncProfileToSupabase, verifyAccountEmail, writeAccounts } from './authAccounts.js';
 
 test('maps a Supabase user to a profile account', () => {
   const account = buildAccountFromSupabaseUser({
@@ -145,6 +145,48 @@ test('prefers the local Parent role over stale Supabase teacher metadata during 
     assert.equal(authenticated.role, 'Parent');
   } finally {
     supabase.auth.signInWithPassword = originalSignIn;
+  }
+});
+
+test('preserves an existing Supabase display name when login sync runs without an explicit name', async () => {
+  if (!supabase?.auth) {
+    return;
+  }
+
+  const originalGetUser = supabase.auth.getUser;
+  const originalUpdateUser = supabase.auth.updateUser;
+  const capturedPayloads = [];
+
+  supabase.auth.getUser = async () => ({
+    data: {
+      user: {
+        id: 'sync-user-1',
+        email: 'display-name@example.com',
+        user_metadata: {
+          full_name: 'Existing Display Name',
+          school_id: 'ESP-999',
+          role: 'Parent',
+          phone: '+639171111111'
+        }
+      }
+    },
+    error: null
+  });
+
+  supabase.auth.updateUser = async ({ data }) => {
+    capturedPayloads.push(data);
+    return { data: { user: {} }, error: null };
+  };
+
+  try {
+    const result = await syncProfileToSupabase({ role: 'Parent', email: 'display-name@example.com' });
+    assert.ok(result);
+    assert.equal(capturedPayloads[0].full_name, 'Existing Display Name');
+    assert.equal(capturedPayloads[0].phone, '+639171111111');
+    assert.equal(capturedPayloads[0].school_id, 'ESP-999');
+  } finally {
+    supabase.auth.getUser = originalGetUser;
+    supabase.auth.updateUser = originalUpdateUser;
   }
 });
 
@@ -315,6 +357,32 @@ test('preserves a selected Parent role over teacher-style email hints during sig
     schoolId: 'ESP-2026-007',
     email,
     password: 'TeacherPass123!'
+  });
+
+  assert.equal(authenticated.ok, true);
+  assert.equal(authenticated.role, 'Parent');
+});
+
+test('keeps a stored Parent role even when a different fallback role is selected', async () => {
+  const email = `parent-fallback-${Date.now()}@school.edu.ph`;
+  const registered = await registerAccount({
+    fullName: 'Parent Fallback User',
+    email,
+    schoolId: 'ESP-2026-014',
+    password: 'ParentPass123!',
+    role: 'Parent'
+  });
+
+  assert.equal(registered.ok, true);
+
+  const verification = verifyAccountEmail(email, registered.verificationCode);
+  assert.equal(verification.ok, true);
+
+  const authenticated = await authenticateAccount({
+    schoolId: 'ESP-2026-014',
+    email,
+    password: 'ParentPass123!',
+    fallbackRole: 'Teacher'
   });
 
   assert.equal(authenticated.ok, true);

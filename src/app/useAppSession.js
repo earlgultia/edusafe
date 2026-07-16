@@ -44,9 +44,11 @@ function useAppSession() {
       ? { role: account, fullName: 'User', email: '' }
       : account;
 
+    const nextRole = normalizeRole(nextAccount.role, 'Parent');
+
     setAuth({
       signedIn: true,
-      role: normalizeRole(nextAccount.role, 'Parent'),
+      role: nextRole,
       fullName: nextAccount.fullName || 'User',
       email: nextAccount.email || ''
     });
@@ -57,7 +59,7 @@ function useAppSession() {
       try {
         const mod = await import('../lib/nativePush.js');
         if (mod && typeof mod.initNativePush === 'function') {
-          const result = await mod.initNativePush({ email: nextAccount.email || '', role: nextAccount.role || '' });
+          const result = await mod.initNativePush({ email: nextAccount.email || '', role: nextRole || '' });
           // expose simulation helper in dev for manual testing
           if (typeof window !== 'undefined' && import.meta?.env?.DEV && typeof mod.simulatePushForDev === 'function') {
             try { window.__simulatePush = mod.simulatePushForDev; } catch (e) { /* ignore */ }

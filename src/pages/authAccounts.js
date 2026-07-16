@@ -20,6 +20,10 @@ function normalizeRole(role, fallback = 'Parent') {
   return matched || fallback;
 }
 
+function resolveLoginRole(account, fallbackRole, email) {
+  return normalizeRole(resolveAccountRole(account?.role, email, fallbackRole), fallbackRole);
+}
+
 function isAccountReadyForLogin(account) {
   if (!account) return false;
 
@@ -128,11 +132,16 @@ async function syncProfileToSupabase(account = {}, appData = null) {
       return null;
     }
 
+    const existingMetadata = user?.user_metadata || {};
+    const explicitFullName = String(account.fullName || '').trim();
+    const explicitSchoolId = String(account.schoolId || '').trim();
+    const explicitPhone = String(account.phone || '').trim();
+
     const metadata = {
-      full_name: String(account.fullName || user.user_metadata?.full_name || '').trim(),
-      school_id: String(account.schoolId || user.user_metadata?.school_id || '').trim(),
-      role: normalizeRole(resolveAccountRole(account.role || user.user_metadata?.role, String(user?.email || ''), 'Parent'), 'Parent'),
-      phone: String(account.phone || user.user_metadata?.phone || '').trim()
+      full_name: explicitFullName || String(existingMetadata.full_name || user?.email || '').trim(),
+      school_id: explicitSchoolId || String(existingMetadata.school_id || '').trim(),
+      role: normalizeRole(resolveAccountRole(account.role || existingMetadata.role, String(user?.email || ''), 'Parent'), 'Parent'),
+      phone: explicitPhone || String(existingMetadata.phone || '').trim()
     };
 
     if (appData !== null) {
@@ -284,11 +293,7 @@ async function authenticateAccount({ schoolId, email, password, fallbackRole = '
       return { ok: false, message: 'Please confirm your email before signing in. Use the confirmation code from your email.' };
     }
 
-    const normalizedStoredRole = normalizeRole(account?.role, 'Parent');
-    const normalizedFallbackRole = normalizeRole(fallbackRole, 'Parent');
-    const role = normalizedStoredRole === 'Parent' && normalizedFallbackRole !== 'Parent'
-      ? normalizedFallbackRole
-      : normalizeRole(resolveAccountRole(account.role, normalizedEmail, fallbackRole), fallbackRole);
+    const role = resolveLoginRole(account, fallbackRole, normalizedEmail);
     const updatedAccount = { ...account, role };
     void syncProfileToSupabase(updatedAccount);
     return { ok: true, role, account: updatedAccount };
