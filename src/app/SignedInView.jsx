@@ -76,15 +76,27 @@ function SignedInView({ role, userName, auth, setAuth, signOut, data, stats, act
       }),
       notifications: (data?.notifications || []).filter((notification) => {
         if (!notification.studentId && !Array.isArray(notification.studentIds) && !Array.isArray(notification.guardianIds)) return true;
-        const targetIds = Array.isArray(notification.studentIds) ? notification.studentIds : [notification.studentId];
-        return targetIds.some((studentId) => linkedStudentIds.has(String(studentId)));
+
+        const targetStudentIds = Array.isArray(notification.studentIds)
+          ? notification.studentIds
+          : [notification.studentId];
+
+        const matchesStudentScope = targetStudentIds.some((studentId) => linkedStudentIds.has(String(studentId)));
+        const matchesGuardianScope = Array.isArray(notification.guardianIds)
+          ? notification.guardianIds.some((guardianId) => {
+              const guardian = (data?.guardians || []).find((entry) => String(entry.id) === String(guardianId));
+              return guardian && linkedStudentIds.has(String(guardian.studentId || ''));
+            })
+          : false;
+
+        return matchesStudentScope || matchesGuardianScope;
       })
     };
   })();
 
   return (
     <div className="app">
-      <AppChrome role={role} userName={userName} onSignOut={requestSignOut} data={data} actions={actions} />
+      <AppChrome role={role} userName={userName} onSignOut={requestSignOut} data={sheetData} actions={actions} />
 
       <main className="screen">
         <RoleDashboard role={role} data={sheetData} stats={stats} userName={userName} auth={auth} setAuth={setAuth} setSheet={setSheet} signOut={requestSignOut} actions={actions} />

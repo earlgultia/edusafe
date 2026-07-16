@@ -51,4 +51,28 @@ describe('SignedInView', () => {
     expect(screen.getByText('Student One')).toBeInTheDocument();
     expect(screen.queryByText('Student Two')).not.toBeInTheDocument();
   });
+
+  it('passes guardian-scoped notifications to the parent dashboard', () => {
+    render(
+      <SignedInView
+        role="Parent"
+        userName="Parent One"
+        auth={{ email: 'parent@example.com', fullName: 'Parent One' }}
+        setAuth={vi.fn()}
+        signOut={vi.fn()}
+        data={{
+          students: [{ id: 's1', name: 'Student One' }],
+          teachers: [],
+          guardians: [{ id: 'g1', studentId: 's1', email: 'parent@example.com', name: 'Parent One' }],
+          notifications: [{ id: 'n1', title: 'Attendance Alert', body: 'Student One was marked absent.', guardianIds: ['g1'] }]
+        }}
+        stats={{}}
+        actions={{}}
+        sheet={null}
+        setSheet={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText('Attendance Alert')).toBeInTheDocument();
+  });
 });

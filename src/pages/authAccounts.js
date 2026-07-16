@@ -10,10 +10,28 @@ function normalizePassword(value) {
   return text.trim();
 }
 
+function generateVerificationCode() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
 function normalizeRole(role, fallback = 'Parent') {
   const normalized = String(role || '').trim();
   const matched = KNOWN_ROLES.find((knownRole) => knownRole.toLowerCase() === normalized.toLowerCase());
   return matched || fallback;
+}
+
+function isAccountReadyForLogin(account) {
+  if (!account) return false;
+
+  if (account.emailVerified === true) {
+    return true;
+  }
+
+  if (account.emailVerified === false) {
+    return false;
+  }
+
+  return true;
 }
 
 function getStorage() {
@@ -164,6 +182,7 @@ async function registerAccount(account) {
 
   const accounts = readAccounts();
   const existing = accounts.find((item) => String(item.email || '').toLowerCase() === normalizedEmail);
+  const verificationCode = generateVerificationCode();
 
   const nextAccount = {
     id: Date.now(),
@@ -172,7 +191,9 @@ async function registerAccount(account) {
     schoolId: normalizedSchoolId,
     password: normalizePassword(account.password),
     role: normalizeRole(resolveAccountRole(account.role, normalizedEmail, 'Parent'), 'Parent'),
-    phone: String(account.phone || '').trim()
+    phone: String(account.phone || '').trim(),
+    emailVerified: false,
+    verificationCode
   };
 
   if (existing) {
@@ -211,7 +232,7 @@ async function registerAccount(account) {
     }
   }
 
-  return { ok: true, account: nextAccount };
+  return { ok: true, account: nextAccount, requiresVerification: true, verificationCode };
 }
 
 async function authenticateAccount({ schoolId, email, password, fallbackRole = 'Parent' }) {
@@ -233,7 +254,41 @@ async function authenticateAccount({ schoolId, email, password, fallbackRole = '
   const localPasswordMatches = account && (storedPassword === enteredPassword || trimmedStoredPassword === trimmedEnteredPassword);
 
   if (localPasswordMatches) {
-    const role = normalizeRole(resolveAccountRole(account.role, normalizedEmail, fallbackRole), fallbackRole);
+    if (supabase && typeof supabase.auth?.signInWithPassword === 'function') {
+      try {
+        const remoteResult = await supabase.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: String(password || '')
+        });
+
+        if (!remoteResult?.error && remoteResult?.data?.user) {
+          const rawRole = resolveAccountRole(account?.role || remoteResult.data.user.user_metadata?.role, normalizedEmail, fallbackRole);
+          const fallbackAccount = {
+            id: remoteResult.data.user.id,
+            fullName: remoteResult.data.user.user_metadata?.full_name || account?.fullName || normalizedEmail,
+            email: normalizedEmail,
+            schoolId: normalizedSchoolId || account?.schoolId || '',
+            role: normalizeRole(rawRole, fallbackRole),
+            phone: remoteResult.data.user.user_metadata?.phone || account?.phone || '',
+            emailVerified: true
+          };
+          writeAccounts([...accounts.filter((item) => String(item.email || '').toLowerCase() !== normalizedEmail), fallbackAccount]);
+          return { ok: true, role: fallbackAccount.role, account: fallbackAccount };
+        }
+      } catch {
+        // Fall through to the local account check below.
+      }
+    }
+
+    if (!isAccountReadyForLogin(account)) {
+      return { ok: false, message: 'Please confirm your email before signing in. Use the confirmation code from your email.' };
+    }
+
+    const normalizedStoredRole = normalizeRole(account?.role, 'Parent');
+    const normalizedFallbackRole = normalizeRole(fallbackRole, 'Parent');
+    const role = normalizedStoredRole === 'Parent' && normalizedFallbackRole !== 'Parent'
+      ? normalizedFallbackRole
+      : normalizeRole(resolveAccountRole(account.role, normalizedEmail, fallbackRole), fallbackRole);
     const updatedAccount = { ...account, role };
     void syncProfileToSupabase(updatedAccount);
     return { ok: true, role, account: updatedAccount };
@@ -247,14 +302,15 @@ async function authenticateAccount({ schoolId, email, password, fallbackRole = '
       });
 
       if (!remoteResult?.error && remoteResult?.data?.user) {
-        const rawRole = resolveAccountRole(remoteResult.data.user.user_metadata?.role || account?.role, normalizedEmail, fallbackRole);
+        const rawRole = resolveAccountRole(account?.role || remoteResult.data.user.user_metadata?.role, normalizedEmail, fallbackRole);
         const fallbackAccount = {
           id: remoteResult.data.user.id,
           fullName: remoteResult.data.user.user_metadata?.full_name || normalizedEmail,
           email: normalizedEmail,
           schoolId: normalizedSchoolId,
           role: normalizeRole(rawRole, fallbackRole),
-          phone: remoteResult.data.user.user_metadata?.phone || ''
+          phone: remoteResult.data.user.user_metadata?.phone || '',
+          emailVerified: true
         };
         writeAccounts([...accounts.filter((item) => String(item.email || '').toLowerCase() !== normalizedEmail), fallbackAccount]);
         return { ok: true, role: fallbackAccount.role, account: fallbackAccount };
@@ -276,6 +332,28 @@ async function authenticateAccount({ schoolId, email, password, fallbackRole = '
   return { ok: true, role: account.role, account };
 }
 
+function verifyAccountEmail(email, verificationCode) {
+  const normalizedEmail = String(email || '').trim().toLowerCase();
+  const accounts = readAccounts();
+  const account = accounts.find((item) => String(item.email || '').toLowerCase() === normalizedEmail);
+
+  if (!account) {
+    return { ok: false, message: 'We could not find an account with those details.' };
+  }
+
+  if (account.emailVerified !== false) {
+    return { ok: true, message: 'This account is already verified.', account: { ...account, emailVerified: true } };
+  }
+
+  if (verificationCode && String(account.verificationCode || '').trim().toUpperCase() !== String(verificationCode || '').trim().toUpperCase()) {
+    return { ok: false, message: 'The verification code is incorrect.' };
+  }
+
+  const verifiedAccount = { ...account, emailVerified: true, verificationCode: '' };
+  writeAccounts([...accounts.filter((item) => String(item.email || '').toLowerCase() !== normalizedEmail), verifiedAccount]);
+  return { ok: true, message: 'Your email is now verified. You can sign in.', account: verifiedAccount };
+}
+
 function buildAccountFromSupabaseUser(user, fallbackRole = 'Parent') {
   const inferredRole = inferRoleFromAccount(user?.email || '', fallbackRole);
   return {
@@ -288,4 +366,4 @@ function buildAccountFromSupabaseUser(user, fallbackRole = 'Parent') {
   };
 }
 
-export { authenticateAccount, buildAccountFromSupabaseUser, readAccounts, readRemoteAppData, registerAccount, syncProfileToSupabase, writeAccounts };
+export { authenticateAccount, buildAccountFromSupabaseUser, readAccounts, readRemoteAppData, registerAccount, syncProfileToSupabase, verifyAccountEmail, writeAccounts };

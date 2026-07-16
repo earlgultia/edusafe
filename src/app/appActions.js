@@ -1,4 +1,4 @@
-import { addBusinessAudit, hasDuplicateAttendance } from './businessLogic.js';
+import { addBusinessAudit, normalizeDate } from './businessLogic.js';
 import { canPerformAction, queueOfflineAction } from './phaseTwoLogic.js';
 
 function isEmergencyCooldownActive(state = {}, type = '') {
@@ -231,22 +231,29 @@ function createAppActions(setData, context = {}) {
 
       const student = (d.students || []).find((s) => s.id === id);
       const linkedGuardianIds = getScopedGuardianIds(d, id);
+      const existingAttendanceEntry = (d.attendanceLog || []).find((entry) => {
+        const sameStudent = String(entry.studentId || '') === String(id || '');
+        const sameDate = normalizeDate(entry.date || entry.dateKey || '') === normalizeDate('Today');
+        return sameStudent && sameDate;
+      });
 
-      if (hasDuplicateAttendance(d, id, 'Today')) {
-        return withAudit(d, 'markAttendance', { studentId: id, status, rejected: true, reason: 'duplicate_attendance' });
-      }
+      const attendanceEntry = {
+        id: existingAttendanceEntry?.id || Date.now(),
+        studentId: id,
+        student: student?.name || 'Student',
+        status,
+        time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
+        date: existingAttendanceEntry?.date || 'Today',
+        schoolId: getSchoolContext(d)
+      };
+
+      const nextAttendanceLog = existingAttendanceEntry
+        ? (d.attendanceLog || []).map((entry) => (String(entry.id) === String(existingAttendanceEntry.id) ? attendanceEntry : entry))
+        : [{ ...attendanceEntry }, ...(d.attendanceLog || [])];
 
       const next = {
         ...d,
-        attendanceLog: [{
-          id: Date.now(),
-          studentId: id,
-          student: student?.name || 'Student',
-          status,
-          time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }),
-          date: 'Today',
-          schoolId: getSchoolContext(d)
-        }, ...(d.attendanceLog || [])],
+        attendanceLog: nextAttendanceLog,
         students: (d.students || []).map((s) => (s.id === id ? { ...s, status } : s)),
         announcements: status === 'Absent'
           ? [{ id: Date.now(), title: 'Attendance Alert', audience: 'Parent', studentId: id, guardianIds: linkedGuardianIds, body: `${student?.name} was marked absent today.`, priority: 'High' }, ...(d.announcements || [])]
@@ -254,7 +261,7 @@ function createAppActions(setData, context = {}) {
         notifications: [{ id: Date.now(), type: 'attendance', studentId: id, guardianIds: linkedGuardianIds, title: `${student?.name} marked ${status}`, body: `${student?.name} was marked ${status}.`, read: false, time: new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) }, ...(d.notifications || [])]
       };
 
-      return withAudit(next, 'markAttendance', { studentId: id, status, rejected: false });
+      return withAudit(next, 'markAttendance', { studentId: id, status, rejected: false, updated: Boolean(existingAttendanceEntry) });
     }),
     releaseStudent: (guardianId) => setData((d) => {
       const permissionCheck = ensurePermission(d, 'pickup', { guardianId }, 'releaseStudent');

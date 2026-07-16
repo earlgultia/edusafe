@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { inferRoleFromAccount, validateLoginForm, validateRegisterForm } from './authLogic.js';
+import { inferRoleFromAccount, resolveAccountRole, validateLoginForm, validateRegisterForm } from './authLogic.js';
 
 test('infers a role from a clear email hint', () => {
   assert.equal(inferRoleFromAccount('principal@school.edu.ph', 'Parent'), 'Admin');
@@ -15,6 +15,24 @@ test('infers Parent from parent or guardian email hints', () => {
 
 test('falls back to the chosen role when no clear role hint exists', () => {
   assert.equal(inferRoleFromAccount('student@school.edu.ph', 'Nurse'), 'Nurse');
+});
+
+test('preserves a plain parent role when no non-parent fallback was selected', () => {
+  assert.equal(resolveAccountRole('Parent', 'student@school.edu.ph', 'Parent'), 'Parent');
+  assert.equal(resolveAccountRole('parent', 'guardian@school.edu.ph', 'Parent'), 'Parent');
+});
+
+test('preserves the explicit Parent role when no non-parent fallback was selected', () => {
+  assert.equal(resolveAccountRole('Parent', 'teacher@school.edu.ph', 'Parent'), 'Parent');
+});
+
+test('preserves an explicitly stored Parent role even when the email hints at a teacher account', () => {
+  assert.equal(resolveAccountRole('Parent', 'teacher@school.edu.ph', 'Parent'), 'Parent');
+});
+
+test('keeps a stored Parent role unless a different explicit role was chosen', () => {
+  assert.equal(resolveAccountRole('Parent', 'student@school.edu.ph', 'Teacher'), 'Parent');
+  assert.equal(resolveAccountRole('Parent', 'guardian@school.edu.ph', 'Admin'), 'Parent');
 });
 
 test('rejects empty login fields', () => {

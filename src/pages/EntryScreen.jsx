@@ -1,11 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, BellRing, BookOpenCheck, Clock3, Eye, EyeOff, Lock, Mail, ShieldCheck, Smartphone, Users2, UserPlus } from 'lucide-react';
 import { landingFeatures, landingProof, landingStats, mvpScreens, roleProfiles } from '../appContent.js';
-import { authenticateAccount, registerAccount } from './authAccounts.js';
+import { authenticateAccount, registerAccount, verifyAccountEmail } from './authAccounts.js';
 import { inferRoleFromAccount, validateLoginForm, validateRegisterForm } from './authLogic.js';
 function EntryScreen({ view, role, setRole, setView, signIn }) {
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
+  const [pendingVerificationCode, setPendingVerificationCode] = useState('');
+
   if (view === 'login') {
-    return <LoginScreen role={role} setRole={setRole} onBack={() => setView('landing')} onRegister={() => setView('register')} onForgot={() => setView('forgot')} onSubmit={(nextRole) => signIn(nextRole)} />;
+    return (
+      <LoginScreen
+        role={role}
+        setRole={setRole}
+        pendingVerificationEmail={pendingVerificationEmail}
+        pendingVerificationCode={pendingVerificationCode}
+        onBack={() => setView('landing')}
+        onRegister={() => setView('register')}
+        onForgot={() => setView('forgot')}
+        onSubmit={(nextRole) => signIn(nextRole)}
+        onVerificationSuccess={() => {
+          setPendingVerificationEmail('');
+          setPendingVerificationCode('');
+        }}
+      />
+    );
   }
 
   if (view === 'forgot') {
@@ -27,6 +45,8 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
           } catch (e) {
             // ignore
           }
+          setPendingVerificationEmail(account?.email || '');
+          setPendingVerificationCode(account?.verificationCode || '');
           setView('login');
         }}
       />
@@ -115,11 +135,16 @@ function EntryScreen({ view, role, setRole, setView, signIn }) {
   );
 }
 
-function LoginScreen({ role, onBack, onRegister, onForgot, onSubmit }) {
+function LoginScreen({ role, setRole, pendingVerificationEmail, pendingVerificationCode, onBack, onRegister, onForgot, onSubmit, onVerificationSuccess }) {
   const [form, setForm] = useState({ email: '', password: '' });
   const [feedback, setFeedback] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [verificationCode, setVerificationCode] = useState(pendingVerificationCode || '');
+  useEffect(() => {
+    setVerificationCode(pendingVerificationCode || '');
+  }, [pendingVerificationCode]);
+
   const handleForgotPassword = () => {
     if (typeof onForgot === 'function') {
       onForgot();
@@ -132,6 +157,24 @@ function LoginScreen({ role, onBack, onRegister, onForgot, onSubmit }) {
     }
     // Simulate reset flow - replace with real endpoint when available
     setFeedback(`If an account exists for ${email}, a password reset link has been sent.`);
+  };
+
+  const handleVerification = async () => {
+    if (!pendingVerificationEmail) {
+      setFeedback('There is no pending confirmation for this account.');
+      return;
+    }
+
+    const result = await verifyAccountEmail(pendingVerificationEmail, verificationCode || pendingVerificationCode);
+    if (!result.ok) {
+      setFeedback(result.message);
+      return;
+    }
+
+    setFeedback(result.message);
+    if (typeof onVerificationSuccess === 'function') {
+      onVerificationSuccess();
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -151,7 +194,7 @@ function LoginScreen({ role, onBack, onRegister, onForgot, onSubmit }) {
       schoolId: '',
       email: form.email,
       password: form.password,
-      fallbackRole: role || 'Admin'
+      fallbackRole: role || 'Parent'
     });
 
     setLoading(false);
@@ -160,8 +203,13 @@ function LoginScreen({ role, onBack, onRegister, onForgot, onSubmit }) {
       return;
     }
 
+    const resolvedRole = authResult.role || role || 'Parent';
+    if (typeof setRole === 'function') {
+      setRole(resolvedRole);
+    }
+
     setFeedback('');
-    onSubmit({ role: authResult.role, fullName: authResult.account?.fullName || form.email, email: form.email });
+    onSubmit({ role: resolvedRole, fullName: authResult.account?.fullName || form.email, email: form.email });
   };
 
   return (
@@ -239,7 +287,7 @@ function RegisterScreen({ role, setRole, onBack, onLogin, onSubmit }) {
     }
 
     setFeedback('');
-    onSubmit({ role: registerRole, fullName: form.fullName, email: form.email });
+    onSubmit({ role: registerRole, fullName: form.fullName, email: form.email, verificationCode: registerResult.verificationCode });
   };
 
   return (

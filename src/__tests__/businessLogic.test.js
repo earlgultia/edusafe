@@ -22,6 +22,26 @@ describe('phase 1 business logic', () => {
     expect(state.auditLog.some((entry) => entry.action === 'markAttendance')).toBe(true);
   });
 
+  it('updates an existing attendance record for the same student on the same day with the latest status', () => {
+    let state = JSON.parse(JSON.stringify(initialData));
+    state.students = [{ id: 's1', name: 'Child Test' }];
+    state.school = { name: 'Sample School' };
+
+    const setData = (updater) => {
+      state = updater(state);
+    };
+
+    const actions = createAppActions(setData);
+
+    actions.markAttendance('s1', 'Present');
+    actions.markAttendance('s1', 'Late');
+
+    const studentAttendance = state.attendanceLog.filter((entry) => entry.studentId === 's1');
+    expect(studentAttendance).toHaveLength(1);
+    expect(studentAttendance[0].status).toBe('Late');
+    expect(state.students[0].status).toBe('Late');
+  });
+
   it('blocks attendance changes for users without attendance permission and queues them offline', () => {
     let state = JSON.parse(JSON.stringify(initialData));
     state.students = [{ id: 's1', name: 'Child Test' }];

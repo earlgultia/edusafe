@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import { supabase } from '../lib/supabaseClient.js';
-import { authenticateAccount, buildAccountFromSupabaseUser, readAccounts, registerAccount, writeAccounts } from './authAccounts.js';
+import { authenticateAccount, buildAccountFromSupabaseUser, readAccounts, registerAccount, verifyAccountEmail, writeAccounts } from './authAccounts.js';
 
 test('maps a Supabase user to a profile account', () => {
   const account = buildAccountFromSupabaseUser({
@@ -36,7 +36,7 @@ test('normalizes Supabase user roles to known app roles', () => {
   assert.equal(account.fullName, 'Maria Reyes');
 });
 
-test('registers a new account and authenticates it later', async () => {
+test('registers a new account and requires email verification before login', async () => {
   const created = await registerAccount({
     fullName: 'Mina Santos',
     email: 'mina@school.edu.ph',
@@ -46,6 +46,19 @@ test('registers a new account and authenticates it later', async () => {
   });
 
   assert.equal(created.ok, true);
+  assert.equal(created.requiresVerification, true);
+
+  const unauthenticated = await authenticateAccount({
+    schoolId: 'ESP-2026-001',
+    email: 'mina@school.edu.ph',
+    password: 'Secure123!'
+  });
+
+  assert.equal(unauthenticated.ok, false);
+  assert.match(unauthenticated.message, /confirm/i);
+
+  const verified = verifyAccountEmail('mina@school.edu.ph', created.verificationCode);
+  assert.equal(verified.ok, true);
 
   const authenticated = await authenticateAccount({
     schoolId: 'ESP-2026-001',
@@ -57,9 +70,139 @@ test('registers a new account and authenticates it later', async () => {
   assert.equal(authenticated.role, 'Parent');
 });
 
+test('allows sign-in when the account has already been confirmed in email', async () => {
+  const email = `confirmed-${Date.now()}@school.edu.ph`;
+  const created = await registerAccount({
+    fullName: 'Confirmed User',
+    email,
+    schoolId: 'ESP-2026-011',
+    password: 'Confirmed123!',
+    role: 'Parent'
+  });
+
+  assert.equal(created.ok, true);
+
+  const verified = verifyAccountEmail(email, created.verificationCode);
+  assert.equal(verified.ok, true);
+
+  const authenticated = await authenticateAccount({
+    schoolId: 'ESP-2026-011',
+    email,
+    password: 'Confirmed123!'
+  });
+
+  assert.equal(authenticated.ok, true);
+  assert.equal(authenticated.role, 'Parent');
+});
+
+test('prefers the local Parent role over stale Supabase teacher metadata during sign-in', async () => {
+  if (!supabase?.auth) {
+    return;
+  }
+
+  const email = `parent-remote-${Date.now()}@school.edu.ph`;
+  const originalSignIn = supabase.auth.signInWithPassword;
+  const existingAccounts = readAccounts();
+  writeAccounts([...existingAccounts, {
+    id: Date.now(),
+    fullName: 'Parent Remote User',
+    email,
+    schoolId: 'ESP-2026-013',
+    password: 'ParentPass123!',
+    role: 'Parent',
+    phone: '',
+    emailVerified: true
+  }]);
+
+  supabase.auth.signInWithPassword = async ({ email: submittedEmail, password }) => {
+    assert.equal(submittedEmail, email);
+    assert.equal(password, 'ParentPass123!');
+    return {
+      data: {
+        user: {
+          id: 'remote-user-parent-1',
+          email,
+          user_metadata: {
+            full_name: 'Parent Remote User',
+            role: 'Teacher',
+            phone: ''
+          }
+        }
+      },
+      error: null
+    };
+  };
+
+  try {
+    const authenticated = await authenticateAccount({
+      schoolId: 'ESP-2026-013',
+      email,
+      password: 'ParentPass123!',
+      fallbackRole: 'Parent'
+    });
+
+    assert.equal(authenticated.ok, true);
+    assert.equal(authenticated.role, 'Parent');
+  } finally {
+    supabase.auth.signInWithPassword = originalSignIn;
+  }
+});
+
+test('allows Supabase-authenticated accounts to sign in even when the local confirmation flag is still false', async () => {
+  if (!supabase?.auth) {
+    return;
+  }
+
+  const email = `supabase-confirmed-${Date.now()}@school.edu.ph`;
+  const originalSignIn = supabase.auth.signInWithPassword;
+  const existingAccounts = readAccounts();
+  writeAccounts([...existingAccounts, {
+    id: Date.now(),
+    fullName: 'Supabase Confirmed User',
+    email,
+    schoolId: 'ESP-2026-012',
+    password: 'Confirmed123!',
+    role: 'Parent',
+    phone: '',
+    emailVerified: false
+  }]);
+
+  supabase.auth.signInWithPassword = async ({ email: submittedEmail, password }) => {
+    assert.equal(submittedEmail, email);
+    assert.equal(password, 'Confirmed123!');
+    return {
+      data: {
+        user: {
+          id: 'remote-user-confirmed',
+          email,
+          user_metadata: {
+            full_name: 'Supabase Confirmed User',
+            role: 'Parent',
+            phone: ''
+          }
+        }
+      },
+      error: null
+    };
+  };
+
+  try {
+    const authenticated = await authenticateAccount({
+      schoolId: 'ESP-2026-012',
+      email,
+      password: 'Confirmed123!'
+    });
+
+    assert.equal(authenticated.ok, true);
+    assert.equal(authenticated.role, 'Parent');
+  } finally {
+    supabase.auth.signInWithPassword = originalSignIn;
+  }
+});
+
 test('allows re-registration for an email that exists only in local storage but is deleted remotely', async () => {
   const email = `deleted-email-${Date.now()}@school.edu.ph`;
-  await registerAccount({
+  const created = await registerAccount({
     fullName: 'Deleted User',
     email,
     schoolId: 'ESP-2026-999',
@@ -70,6 +213,9 @@ test('allows re-registration for an email that exists only in local storage but 
   const storedAccounts = readAccounts();
   const staleAccount = storedAccounts.find((item) => item.email === email);
   assert.ok(staleAccount, 'Expected a saved local account for the deleted email');
+
+  const verification = verifyAccountEmail(email, created.verificationCode);
+  assert.equal(verification.ok, true);
 
   const authenticated = await authenticateAccount({
     schoolId: 'ESP-2026-999',
@@ -112,6 +258,9 @@ test('retains Admin role for a locally registered Admin account', async () => {
 
   assert.equal(registered.ok, true);
 
+  const verification = verifyAccountEmail(email, registered.verificationCode);
+  assert.equal(verification.ok, true);
+
   const authenticated = await authenticateAccount({
     schoolId: 'ESP-2026-010',
     email,
@@ -134,6 +283,9 @@ test('accepts a login when the password is entered with surrounding whitespace',
 
   assert.equal(registered.ok, true);
 
+  const verification = verifyAccountEmail(email, registered.verificationCode);
+  assert.equal(verification.ok, true);
+
   const authenticated = await authenticateAccount({
     schoolId: 'ESP-2026-004',
     email,
@@ -144,7 +296,7 @@ test('accepts a login when the password is entered with surrounding whitespace',
   assert.equal(authenticated.role, 'Parent');
 });
 
-test('prefers the inferred role over a stale stored parent role for teacher-style emails', async () => {
+test('preserves a selected Parent role over teacher-style email hints during sign-in', async () => {
   const email = `teacher-stale-${Date.now()}@school.edu.ph`;
   const registered = await registerAccount({
     fullName: 'Teacher Stale User',
@@ -156,6 +308,9 @@ test('prefers the inferred role over a stale stored parent role for teacher-styl
 
   assert.equal(registered.ok, true);
 
+  const verification = verifyAccountEmail(email, registered.verificationCode);
+  assert.equal(verification.ok, true);
+
   const authenticated = await authenticateAccount({
     schoolId: 'ESP-2026-007',
     email,
@@ -163,7 +318,7 @@ test('prefers the inferred role over a stale stored parent role for teacher-styl
   });
 
   assert.equal(authenticated.ok, true);
-  assert.equal(authenticated.role, 'Teacher');
+  assert.equal(authenticated.role, 'Parent');
 });
 
 test('uses Supabase authentication when a matching account exists remotely', async () => {

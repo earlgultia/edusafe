@@ -217,6 +217,31 @@ describe('Parent dashboard', () => {
     expect(screen.getByText('Linked child')).toBeInTheDocument();
   });
 
+  it('shows only real emergency alerts in the parent dashboard alert section', () => {
+    render(
+      <ParentDashboard
+        data={{
+          students: [{ id: 's1', name: 'Ana Cruz' }],
+          guardians: [{ id: 'g1', studentId: 's1', email: 'parent1@example.com' }],
+          emergency: [{ id: 'e1', title: 'Weather Alert', message: 'Classes will resume at 10 AM.', time: '8:00 AM' }],
+          auditLog: [
+            { id: 'a1', action: 'markAttendance', details: { reason: 'duplicate_attendance' }, timestamp: '2026-07-15T16:15:42.000Z' },
+            { id: 'a2', action: 'unlinkStudentFromParent', details: { reason: 'Record updated' }, timestamp: '2026-07-15T16:15:21.000Z' }
+          ]
+        }}
+        userName="Parent One"
+        auth={{ email: 'parent1@example.com', fullName: 'Parent One' }}
+        setAuth={vi.fn()}
+        setSheet={vi.fn()}
+        actions={{}}
+      />
+    );
+
+    expect(screen.getByText('Weather Alert')).toBeInTheDocument();
+    expect(screen.queryByText('markAttendance')).not.toBeInTheDocument();
+    expect(screen.queryByText('unlinkStudentFromParent')).not.toBeInTheDocument();
+  });
+
   it('allows a parent to remove a linked student from their dashboard', () => {
     const unlinkStudentFromParent = vi.fn();
     window.confirm = vi.fn(() => true);

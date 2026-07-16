@@ -46,17 +46,24 @@ function normalizeRoleValue(role, fallbackRole = 'Parent') {
 }
 
 function resolveAccountRole(accountRole, email, fallbackRole = 'Parent') {
-  const normalizedStoredRole = normalizeRoleValue(accountRole, 'Parent');
-  if (normalizedStoredRole !== 'Parent') {
-    return normalizedStoredRole;
-  }
-
+  const explicitRole = String(accountRole ?? '').trim();
   const normalizedFallbackRole = normalizeRoleValue(fallbackRole, 'Parent');
-  if (normalizedFallbackRole !== 'Parent') {
-    return normalizedFallbackRole;
+
+  if (explicitRole) {
+    const normalizedStoredRole = normalizeRoleValue(explicitRole, 'Parent');
+    if (normalizedStoredRole !== 'Parent') {
+      return normalizedStoredRole;
+    }
+
+    return 'Parent';
   }
 
-  return inferRoleFromAccount(email, 'Parent');
+  const inferredRole = inferRoleFromAccount(email, normalizedFallbackRole);
+  if (inferredRole !== 'Parent') {
+    return inferredRole;
+  }
+
+  return normalizedFallbackRole !== 'Parent' ? normalizedFallbackRole : 'Parent';
 }
 
 function validateLoginForm(values) {

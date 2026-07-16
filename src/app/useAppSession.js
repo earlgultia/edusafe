@@ -4,7 +4,7 @@ import { clearSessionFromStorage, readSessionFromStorage, writeSessionToStorage 
 
 const KNOWN_ROLES = ['Admin', 'Teacher', 'Parent', 'Guard', 'Nurse'];
 
-function normalizeRole(role, fallback = 'Admin') {
+function normalizeRole(role, fallback = 'Parent') {
   const normalized = String(role || '').trim();
   const matched = KNOWN_ROLES.find((knownRole) => knownRole.toLowerCase() === normalized.toLowerCase());
   return matched || fallback;
@@ -12,17 +12,17 @@ function normalizeRole(role, fallback = 'Admin') {
 
 function useAppSession() {
   const [tab, setTab] = useState('dashboard');
-  const [auth, setAuth] = useState({ signedIn: false, role: 'Admin', fullName: 'Guest', email: '' });
+  const [auth, setAuth] = useState({ signedIn: false, role: 'Parent', fullName: 'Guest', email: '' });
   const [sheet, setSheet] = useState(null);
   const [entryView, setEntryView] = useState('landing');
-  const [entryRole, setEntryRole] = useState('Admin');
+  const [entryRole, setEntryRole] = useState('Parent');
 
   useEffect(() => {
     const storedSession = readSessionFromStorage();
     if (storedSession?.signedIn) {
       setAuth({
         signedIn: true,
-        role: normalizeRole(storedSession.role, 'Admin'),
+        role: normalizeRole(storedSession.role, 'Parent'),
         fullName: storedSession.fullName || 'Guest',
         email: storedSession.email || ''
       });
@@ -46,7 +46,7 @@ function useAppSession() {
 
     setAuth({
       signedIn: true,
-      role: normalizeRole(nextAccount.role, 'Admin'),
+      role: normalizeRole(nextAccount.role, 'Parent'),
       fullName: nextAccount.fullName || 'User',
       email: nextAccount.email || ''
     });
@@ -71,7 +71,7 @@ function useAppSession() {
   };
 
   const signOut = () => {
-    setAuth({ signedIn: false, role: 'Admin', fullName: 'Guest', email: '' });
+    setAuth({ signedIn: false, role: 'Parent', fullName: 'Guest', email: '' });
     setSheet(null);
     setTab('dashboard');
     setEntryView('login');

@@ -366,29 +366,17 @@ function ParentDashboard({ data = {}, userName = 'Parent', auth = {}, setAuth = 
             <section className="sectionHeader">
               <h2>Emergency alerts</h2>
             </section>
-            <section className="featureList">
-              {auditEntries.map((entry) => (
-                <article key={entry.id} className="reportRow">
-                  <div>
-                    <h3>{entry.action}</h3>
-                    <p>{entry.details?.reason || 'Record updated'} · {entry.timestamp ? new Date(entry.timestamp).toLocaleString() : 'Unknown'}</p>
-                  </div>
-                  <span>Recorded</span>
-                </article>
-              ))}
-              {!auditEntries.length && <p className="emptyText">No audit entries to display.</p>}
-            </section>
             <div className="featureList">
               {emergencyAlerts.slice(0, 3).map((alert) => (
                 <article key={alert.id} className="reportRow">
                   <div>
-                    <h3>{alert.type}</h3>
-                    <p>{alert.time}</p>
+                    <h3>{alert.title || alert.type || 'Emergency alert'}</h3>
+                    <p>{alert.message || alert.time || 'School safety notice'}</p>
                   </div>
                   <span>Alert</span>
                 </article>
               ))}
-              {!emergencyAlerts.length && <p className="emptyText">No emergency alerts.</p>}
+              {!emergencyAlerts.length && <p className="emptyText">No active emergency alerts.</p>}
             </div>
           </section>
         );

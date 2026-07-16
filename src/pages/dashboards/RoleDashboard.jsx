@@ -3,6 +3,7 @@ import { AdminDashboard } from './AdminDashboard.jsx';
 import { ParentDashboard } from './ParentDashboard.jsx';
 import { PeopleSheet } from '../../components/PeopleSheet.jsx';
 import { getRoleNavigation } from '../../data/roleConfig.js';
+import { resolveAccountRole } from '../authLogic.js';
 
 function TeacherDashboard({ data = {}, stats = {}, userName = 'Teacher', auth = {}, setSheet, actions, signOut }) {
   const [activeTab, setActiveTab] = useState('attendance');
@@ -708,7 +709,8 @@ function NurseDashboard({ data = {}, userName = 'Nurse', setSheet }) {
 }
 
 function RoleDashboard({ role, data, stats, userName, auth, setAuth, setSheet, signOut, actions }) {
-  const normalizedRole = String(role || 'Admin').trim().toLowerCase();
+  const resolvedRole = resolveAccountRole(role, auth?.email || '', 'Parent');
+  const normalizedRole = String(resolvedRole || 'Parent').trim().toLowerCase();
 
   switch (normalizedRole) {
     case 'teacher':
