@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { initialData } from '../data/initialData.js';
 import { createAppActions } from '../app/appActions.js';
 
@@ -158,5 +158,30 @@ describe('phase 1 business logic', () => {
 
     expect(state.incidents[0].status).toBe('Pending Review');
     expect(state.notifications.some((notification) => notification.type === 'incident')).toBe(true);
+  });
+
+  it('dispatches a push notification whenever a dashboard notification is added', async () => {
+    let state = JSON.parse(JSON.stringify(initialData));
+    state.school = { name: 'Sample School' };
+
+    const setData = (updater) => {
+      state = updater(state);
+    };
+
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const actions = createAppActions(setData, { role: 'admin' });
+    actions.addNotification({ title: 'School update', body: 'A new update is available.' });
+
+    await Promise.resolve();
+
+    expect(fetchMock).toHaveBeenCalledWith('/api/sendRole', expect.objectContaining({
+      method: 'POST',
+      headers: expect.objectContaining({ 'Content-Type': 'application/json' })
+    }));
+    expect(fetchMock.mock.calls[0][1].body).toContain('School update');
+
+    vi.unstubAllGlobals();
   });
 });
